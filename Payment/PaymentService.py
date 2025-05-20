@@ -83,7 +83,7 @@ def main():
 
             repeater(1, send)
 
-            #threading.Timer(30.0, pde).start()
+            # repeater(30, pde)
 
             print('[payment] Waiting...')
             ch.start_consuming()

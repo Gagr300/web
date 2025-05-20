@@ -105,7 +105,7 @@ def main():
 
             repeater(1, send)
 
-            #threading.Timer(30.0, pde).start()
+            # repeater(30, pde)
 
             print('[order] Waiting...')
             ch.start_consuming()
