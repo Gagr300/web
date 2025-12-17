@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ оформлен - Фруктовый магазин{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 50px 20px;">
+    <div style="font-size: 5em; color: #28a745;">✅</div>
+    <h2>Заказ успешно оформлен!</h2>
+    <p style="font-size: 1.2em; margin: 20px 0;">Спасибо за ваш заказ. Мы свяжемся с вами для уточнения деталей доставки.</p>
+    
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; max-width: 500px; margin: 30px auto;">
+        <h3>Что дальше?</h3>
+        <ul style="text-align: left; margin: 20px 0; padding-left: 20px;">
+            <li>Вы получите email с подтверждением заказа</li>
+            <li>Наш менеджер свяжется с вами в течение часа</li>
+            <li>Доставка осуществляется в течение дня</li>
+        </ul>
+    </div>
+    
+    <div style="margin-top: 40px;">
+        <a href="{{ url_for('product_list') }}" class="btn">Вернуться к покупкам</a>
+    </div>
+</div>
+{% endblock %}

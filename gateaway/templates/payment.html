@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Оплата - Фруктовый магазин{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h2>Оплата заказа #{{ order_id }}</h2>
+
+    <div style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p style="font-size: 1.2em; margin: 0;">
+            Общая сумма к оплате: <strong style="font-size: 1.5em; color: #28a745;">{{ total }} ₽</strong>
+        </p>
+    </div>
+
+    {% if error %}
+        <div class="message error" style="margin: 20px 0;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div style="background: white; border: 1px solid #ddd; border-radius: 10px; padding: 30px; margin: 30px 0;">
+        <form action="{{ url_for('process_payment') }}" method="POST">
+            <h3 style="margin-bottom: 20px;">Выберите способ оплаты:</h3>
+
+            <div style="margin: 20px 0;">
+                {% set payment_methods = [
+                    {'value': 'card', 'name': '💳 Банковская карта', 'desc': 'Visa, Mastercard, Мир'},
+                    {'value': 'sbp', 'name': '🏦 СБП', 'desc': 'Система быстрых платежей'}
+                ] %}
+
+                {% for method in payment_methods %}
+                <label style="display: block; padding: 15px; border: 2px solid {% if loop.first %}#667eea{% else %}#ddd{% endif %};
+                       border-radius: 10px; margin: 10px 0; cursor: pointer; transition: all 0.3s;"
+                       onmouseover="this.style.borderColor='#667eea'"
+                       onmouseout="this.style.borderColor='{% if loop.first %}#667eea{% else %}#ddd{% endif %}'">
+                    <input type="radio"
+                           name="payment_method"
+                           value="{{ method.value }}"
+                           {% if loop.first %}checked{% endif %}
+                           style="margin-right: 10px;"
+                           onchange="updateSelected(this)">
+                    <div style="display: inline-block; vertical-align: middle;">
+                        <div style="font-weight: bold; font-size: 1.1em;">{{ method.name }}</div>
+                        <div style="font-size: 0.9em; color: #666;">{{ method.desc }}</div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button type="submit"
+                        class="btn"
+                        style="padding: 15px 60px; font-size: 1.3em; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    Оплатить {{ total }} ₽
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+        <a href="{{ url_for('view_cart') }}" class="btn btn-secondary">
+            ← Вернуться в корзину
+        </a>
+
+        <a href="{{ url_for('product_list') }}" class="btn">
+            Вернуться к покупкам
+        </a>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 40px;">
+        <h4>📋 Тестовые сценарии:</h4>
+        <p>Для тестирования разных сценариев оплаты выберите:</p>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+            <li><strong>card</strong> - обычная успешная оплата ✅</li>
+            <li><strong>reject</strong> - имитация отказа в оплате ❌</li>
+            <li><strong>timeout</strong> - имитация долгой обработки (10 сек) ⏳</li>
+        </ul>
+        <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+            <em>Примечание: это тестовые данные, реальные платежи не обрабатываются.</em>
+        </p>
+    </div>
+</div>
+
+<script>
+    function updateSelected(radio) {
+        // Обновляем стиль всех меток
+        const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const input = label.querySelector('input[type="radio"]');
+            if (input.checked) {
+                label.style.borderColor = '#667eea';
+                label.style.background = '#f8f9fa';
+            } else {
+                label.style.borderColor = '#ddd';
+                label.style.background = 'white';
+            }
+        });
+    }
+
+    // Инициализируем стили при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSelected(document.querySelector('input[type="radio"]:checked'));
+    });
+</script>
+{% endblock %}

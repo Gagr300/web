@@ -1,115 +1,78 @@
-import random
-import threading
 import json
-import time
-from pika import BlockingConnection, ConnectionParameters
-from Order import Order
-from Outbox import OrderOutbox
-
-connection_parameters = ConnectionParameters(
-    host='localhost',
-    port=5672,
-)
-
-orders = dict()
-
-outbox = []
-
-fruits = ['apple', 'banana', 'orange', 'pear', 'peach', 'mango']
+import os
+import threading
+from .Order import Order
 
 
-def process_payment_done(ch, method, properties, body):
-    print(f'[order] {json.loads(body)["id"]}  Message received <payment_done>: {json.loads(body)}')
-    orders[json.loads(body)['id']].done_order()
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+class OrderService:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super(OrderService, cls).__new__(cls)
+                cls._instance._initialize()
+            return cls._instance
+
+    def _initialize(self):
+        self.orders = {}
+        self.next_id = 1
+        self.data_file = os.path.join(os.path.dirname(__file__), 'orders.jsonl')
+        self._load_orders()
+
+    def _load_orders(self):
+        """Загрузка заказов из файла"""
+        if os.path.exists(self.data_file):
+            with open(self.data_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        order_data = json.loads(line.strip())
+                        order = Order(order_data['id'], order_data['products_amount'])
+                        order.date = order_data['date']
+                        order.status = order_data['status']
+                        self.orders[order.id] = order
+                        if order.id >= self.next_id:
+                            self.next_id = order.id + 1
+
+    def create_order(self, products_amount):
+        """Создать новый заказ"""
+        order_id = self.next_id
+        self.next_id += 1
+
+        order = Order(order_id, products_amount)
+        self.orders[order_id] = order
+        self._save_order(order)
+
+        return order
+
+    def get_order(self, order_id):
+        """Получить заказ по ID"""
+        return self.orders.get(order_id)
+
+    def update_order_status(self, order_id, status):
+        """Обновить статус заказа"""
+        if order_id in self.orders:
+            order = self.orders[order_id]
+            if status == 'Done':
+                order.done_order()
+            elif status == 'Rejected':
+                order.reject_order()
+            self._save_order(order)
+            return True
+        return False
+
+    def _save_order(self, order):
+        """Сохранить заказ в файл"""
+        order_data = {
+            'id': order.id,
+            'products_amount': order.products_amount,
+            'date': order.date.isoformat(),
+            'status': order.status
+        }
+
+        with open(self.data_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(order_data, ensure_ascii=False) + '\n')
 
 
-def process_payment_not_done_order(ch, method, properties, body):
-    print(f'[order] [not] {json.loads(body)["id"]} Message received <payment_not_done>: {json.loads(body)}')
-    orders[json.loads(body)['id']].reject_order()
-    ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def process_product_not_found(ch, method, properties, body):
-    print(f'[order] [not] {json.loads(body)["id"]} Message received <product_not_found>: {json.loads(body)}')
-    orders[json.loads(body)['id']].reject_order()
-    ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def main():
-    with BlockingConnection(connection_parameters) as conn:
-        with conn.channel() as ch:
-            ch.queue_declare(queue='order_created_queue')
-            ch.queue_declare(queue='payment_done_queue')
-            ch.queue_declare(queue='payment_not_done_order_queue')
-            ch.queue_declare(queue='product_not_found_queue')
-            ch.queue_declare(queue='product_found_queue')
-            for i in range(30):
-                order = dict()
-
-                for _ in range(random.randint(1, 2)):
-                    order.update({random.choice(fruits): random.randint(1, 4)})
-                try:
-                    orders.update({i: Order(i, order)})
-                    outbox.append(
-                        OrderOutbox('order_created_queue',
-                                    json.dumps({'id': i, 'order': orders[i].products_amount}),
-                                    time.time()))
-                    # ch.basic_publish(exchange='',
-                    #                  routing_key='order_created_queue',
-                    #                  body=json.dumps(dict(id=i, order=orders[i].products_amount))
-                    #                  )
-                    print(f'[order] {i} Message sent!')
-                except BaseException as e:
-                    orders.pop(i, 0)
-                    if outbox[-1].queue == 'order_created_queue' and outbox[-1].data == json.dumps(
-                            {i: Order(i, order)}):
-                        outbox.pop()
-                    print('except', e)
-
-            ch.basic_consume(
-                queue='payment_done_queue',
-                on_message_callback=process_payment_done,
-            )
-
-            ch.basic_consume(
-                queue='payment_not_done_order_queue',
-                on_message_callback=process_payment_not_done_order,
-            )
-
-            ch.basic_consume(
-                queue='product_not_found_queue',
-                on_message_callback=process_product_not_found,
-            )
-
-            def repeater(interval, function):
-                threading.Timer(interval, repeater, [interval, function]).start()
-                function()
-
-            def send():
-                global outbox
-                for i, message in enumerate(outbox):
-                    if message.status == 'new':
-                        try:
-                            ch.basic_publish(exchange='',
-                                             routing_key=message.queue,
-                                             body=message.body)
-                            message.status = 'done'
-                        except BaseException as e:
-                            message.status = 'new'
-                            print('except:', e)
-                outbox = [message for message in outbox if message.status == 'new']
-
-            # def pde():
-            #     conn.process_data_events(time_limit=None)
-
-            repeater(1, send)
-
-            # repeater(30, pde)
-
-            print('[order] Waiting...')
-            ch.start_consuming()
-
-
-if __name__ == '__main__':
-    main()
+order_service = OrderService()
