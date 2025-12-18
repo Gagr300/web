@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ оформлен - Фруктовый магазин{% endblock %}
+
+{% block content %}
+<div class="success-container text-center p-8">
+    <div class="success-icon text-8xl mb-6">🎉</div>
+    <h2 class="text-3xl font-bold mb-4">Заказ успешно оформлен!</h2>
+
+    <div class="success-message bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 mb-6 max-w-md mx-auto">
+        <p class="text-lg mb-4">
+            Ваш заказ <span class="font-bold text-green-600 dark:text-green-400">№{{ order_id }}</span> принят в обработку.
+        </p>
+        <p class="text-secondary">
+            Мы свяжемся с вами для подтверждения доставки.
+        </p>
+    </div>
+
+    <div class="success-details bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg mb-8 max-w-md mx-auto">
+        <div class="detail-item flex justify-between mb-4 pb-4 border-b dark:border-gray-700">
+            <span class="detail-label text-secondary">Номер заказа:</span>
+            <span class="detail-value font-bold">{{ order_id }}</span>
+        </div>
+        <div class="detail-item flex justify-between">
+            <span class="detail-label text-secondary">Статус:</span>
+            <span class="detail-value font-bold text-green-600 dark:text-green-400">
+                <i class="fas fa-check-circle mr-2"></i>Оплачен
+            </span>
+        </div>
+    </div>
+
+    <div class="success-actions flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="{{ url_for('product_list') }}" class="btn btn-success text-lg px-8 py-3 hover:scale-105 transition-transform">
+            <i class="fas fa-store mr-2"></i>
+            Продолжить покупки
+        </a>
+        <a href="/" class="btn text-lg px-8 py-3 hover:scale-105 transition-transform">
+            <i class="fas fa-home mr-2"></i>
+            На главную
+        </a>
+    </div>
+
+    <div class="mt-8 text-sm text-secondary">
+        <p><i class="fas fa-info-circle mr-2"></i>Информация о доставке будет отправлена на ваш email</p>
+    </div>
+</div>
+
+<style>
+.success-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.success-icon {
+    animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

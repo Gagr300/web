@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина - Фруктовый магазин{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-item {
+        transition: all 0.3s ease;
+    }
+
+    .cart-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .quantity-control-cart {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .quantity-btn-cart {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .quantity-btn-cart:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .quantity-btn-cart.decrease {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .quantity-btn-cart.increase {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .quantity-btn-cart:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .quantity-input-cart {
+        width: 60px;
+        text-align: center;
+        padding: 0.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .quantity-input-cart:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .remove-btn {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .remove-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+    }
+
+    .item-total {
+        font-size: 1.25rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .item-total.updated {
+        animation: pulse 0.5s ease;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes press {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.9); }
+        100% { transform: scale(1); }
+    }
+
+    .animate-press {
+        animation: press 0.3s ease;
+    }
+
+    .cart-empty-state {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    @media (max-width: 768px) {
+        .cart-item {
+            padding: 1rem !important;
+        }
+
+        .quantity-control-cart {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold mb-2">🛒 Ваша корзина</h2>
+    <p class="text-secondary">Управляйте количеством товаров и оформляйте заказ</p>
+</div>
+
+{% if not products %}
+<div class="text-center p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 shadow-xl cart-empty-state">
+    <div class="text-8xl mb-6">🛒</div>
+    <h3 class="text-2xl font-bold mb-3 text-gray-700 dark:text-gray-300">Корзина пуста</h3>
+    <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
+        Добавьте свежие фрукты и овощи из нашего каталога, чтобы сделать заказ
+    </p>
+    <a href="{{ url_for('product_list') }}" class="btn text-lg px-8 py-3 inline-flex items-center gap-2 hover:scale-105 transition-transform">
+        <span>🛍️</span>
+        Перейти в каталог
+    </a>
+</div>
+{% else %}
+<!-- Таблица корзины -->
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                    <th class="p-4 text-left rounded-tl-2xl">
+                        <div class="flex items-center gap-2">
+                            <span>📦</span>
+                            <span>Товар</span>
+                        </div>
+                    </th>
+                    <th class="p-4 text-center">Цена</th>
+                    <th class="p-4 text-center">Количество</th>
+                    <th class="p-4 text-center">Сумма</th>
+                    <th class="p-4 text-right rounded-tr-2xl">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr class="cart-item border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    data-product="{{ product.name }}">
+                    <!-- Продукт -->
+                    <td class="p-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-4xl">{{ product.emoji }}</div>
+                            <div>
+                                <h4 class="font-bold text-lg">{{ product.name|capitalize }}</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    На складе: {{ product.available }} шт.
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Цена -->
+                    <td class="p-4 text-center">
+                        <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            {{ product.cost }} ₽
+                        </div>
+                    </td>
+
+                    <!-- Количество с красивыми кнопками -->
+                    <td class="p-4 text-center">
+                        <div class="quantity-control-cart justify-center">
+                            <button class="quantity-btn-cart decrease cart-decrease"
+                                    data-product-name="{{ product.name }}"
+                                    {% if product.quantity <= 1 %}disabled{% endif %}>
+                                −
+                            </button>
+
+                            <input type="number"
+                                   class="quantity-input-cart cart-quantity-input"
+                                   value="{{ product.quantity }}"
+                                   min="1"
+                                   max="{{ product.available }}"
+                                   data-product-name="{{ product.name }}">
+
+                            <button class="quantity-btn-cart increase cart-increase"
+                                    data-product-name="{{ product.name }}"
+                                    {% if product.quantity >= product.available %}disabled{% endif %}>
+                                +
+                            </button>
+                        </div>
+                    </td>
+
+                    <!-- Сумма -->
+                    <td class="p-4 text-center">
+                        <div class="item-total text-xl font-bold text-green-600 dark:text-green-400">
+                            {{ product.total }} ₽
+                        </div>
+                    </td>
+
+                    <!-- Действия -->
+                    <td class="p-4 text-right">
+                        <button class="remove-btn remove-from-cart"
+                                data-product-name="{{ product.name }}">
+                            <span>🗑️</span>
+                            Удалить
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Итог -->
+    <div class="p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-b-2xl">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <p class="text-gray-600 dark:text-gray-400">Всего товаров: {{ products|length }} позиций</p>
+                <p class="text-lg text-gray-700 dark:text-gray-300">
+                    Итоговая сумма заказа
+                </p>
+            </div>
+
+            <div class="text-center md:text-right">
+                <div class="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
+                    {{ total_cost }} ₽
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Кнопки действий -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <button onclick="window.cartManager.clearCart()"
+            class="btn btn-secondary text-lg p-4 flex items-center justify-center gap-2 hover:scale-105 transition-transform">
+        <span>🧹</span>
+        Очистить всю корзину
+    </button>
+
+    <form action="{{ url_for('checkout') }}" method="POST" class="m-0">
+        <button type="submit"
+                class="btn btn-success text-lg p-4 w-full flex items-center justify-center gap-2 hover:scale-105 transition-transform">
+            <span>💳</span>
+            Перейти к оплате
+        </button>
+    </form>
+</div>
+
+<!-- Продолжить покупки -->
+<div class="text-center">
+    <a href="{{ url_for('product_list') }}"
+       class="btn text-lg px-8 py-3 inline-flex items-center gap-2 hover:scale-105 transition-transform">
+        <span>🛍️</span>
+        Продолжить покупки
+    </a>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Анимация при изменении количества через input
+        const quantityInputs = document.querySelectorAll('.cart-quantity-input');
+        quantityInputs.forEach(input => {
+            let timeoutId;
+
+            input.addEventListener('change', function() {
+                const productName = this.dataset.productName;
+                const quantity = parseInt(this.value) || 0;
+                const max = parseInt(this.max) || 100;
+                const min = parseInt(this.min) || 1;
+
+                // Валидация
+                if (quantity > max) {
+                    this.value = max;
+                    window.cartManager.showNotification(`Максимально доступно: ${max}`, 'warning');
+                } else if (quantity < min) {
+                    this.value = min;
+                }
+
+                // Обновление с задержкой
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    window.cartManager.updateCartItem(productName, this.value);
+                }, 500);
+            });
+        });
+
+        // Обновление состояния кнопок
+        function updateButtonStates() {
+            document.querySelectorAll('.cart-item').forEach(row => {
+                const productName = row.dataset.product;
+                const input = row.querySelector('.cart-quantity-input');
+                const decreaseBtn = row.querySelector('.cart-decrease');
+                const increaseBtn = row.querySelector('.cart-increase');
+
+                if (input && decreaseBtn && increaseBtn) {
+                    const quantity = parseInt(input.value) || 0;
+                    const max = parseInt(input.max) || 100;
+
+                    decreaseBtn.disabled = quantity <= 1;
+                    increaseBtn.disabled = quantity >= max;
+                }
+            });
+        }
+
+        // Обновляем состояние кнопок при загрузке
+        updateButtonStates();
+    });
+</script>
+{% endblock %}
+{% endblock %}

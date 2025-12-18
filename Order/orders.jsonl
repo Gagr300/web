@@ -1,4 +1,22 @@
-{"id": 1, "products_amount": {"банан": 2, "лимон": 1, "морковь": 1, "яблоко": 9}, "date": "2025-12-17T18:57:05.956128", "status": "In progress"}
-{"id": 1, "products_amount": {"банан": 2, "лимон": 1, "морковь": 1, "яблоко": 9}, "date": "2025-12-17T18:57:05.956128", "status": "Done"}
-{"id": 2, "products_amount": {"яблоко": 1}, "date": "2025-12-17T18:58:35.382158", "status": "In progress"}
-{"id": 2, "products_amount": {"яблоко": 1}, "date": "2025-12-17T18:58:35.382158", "status": "Done"}
+{"id": 1, "products_amount": {"голубика": 2, "яблоко": 5}, "date": "2025-12-18T20:32:08.452057", "status": "In progress"}
+{"id": 2, "products_amount": {"голубика": 2, "яблоко": 4}, "date": "2025-12-18T20:33:33.827924", "status": "In progress"}
+{"id": 2, "products_amount": {"голубика": 2, "яблоко": 4}, "date": "2025-12-18T20:33:33.827924", "status": "Done"}
+{"id": 3, "products_amount": {"банан": 5, "яблоко": 2}, "date": "2025-12-18T20:47:27.581044", "status": "In progress"}
+{"id": 4, "products_amount": {"банан": 5, "черника": 3, "яблоко": 2}, "date": "2025-12-18T20:48:56.863215", "status": "In progress"}
+{"id": 4, "products_amount": {"банан": 5, "черника": 3, "яблоко": 2}, "date": "2025-12-18T20:48:56.863215", "status": "Done"}
+{"id": 5, "products_amount": {"банан": 6, "яблоко": 2}, "date": "2025-12-18T20:50:18.869610", "status": "In progress"}
+{"id": 5, "products_amount": {"банан": 6, "яблоко": 2}, "date": "2025-12-18T20:50:18.869610", "status": "Done"}
+{"id": 6, "products_amount": {"банан": 4, "яблоко": 3}, "date": "2025-12-18T21:02:35.743098", "status": "In progress"}
+{"id": 6, "products_amount": {"банан": 4, "яблоко": 3}, "date": "2025-12-18T21:02:35.743098", "status": "Done"}
+{"id": 7, "products_amount": {"яблоко": 3}, "date": "2025-12-18T22:13:54.684710", "status": "In progress"}
+{"id": 7, "products_amount": {"яблоко": 3}, "date": "2025-12-18T22:13:54.684710", "status": "Done"}
+{"id": 8, "products_amount": {"банан": 4, "манго": 3, "яблоко": 5}, "date": "2025-12-18T22:48:13.204976", "status": "In progress"}
+{"id": 8, "products_amount": {"банан": 4, "манго": 3, "яблоко": 5}, "date": "2025-12-18T22:48:13.204976", "status": "Done"}
+{"id": 9, "products_amount": {"банан": 4, "манго": 3, "яблоко": 4}, "date": "2025-12-18T22:49:41.851831", "status": "In progress"}
+{"id": 9, "products_amount": {"банан": 4, "манго": 3, "яблоко": 4}, "date": "2025-12-18T22:49:41.851831", "status": "Done"}
+{"id": 10, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:00.901208", "status": "In progress"}
+{"id": 10, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:00.901208", "status": "Done"}
+{"id": 11, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:24.972165", "status": "In progress"}
+{"id": 11, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:24.972165", "status": "Done"}
+{"id": 12, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:46.337583", "status": "In progress"}
+{"id": 12, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:46.337583", "status": "Done"}

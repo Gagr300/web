@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Оплата - Фруктовый магазин{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-method {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+    }
+
+    .payment-method:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .payment-method.selected {
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    }
+
+    .payment-icon {
+        font-size: 2.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .payment-method:hover .payment-icon {
+        transform: scale(1.1);
+    }
+
+    .test-methods {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .test-btn {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .test-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+    }
+
+    #payment-form button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .payment-processing {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .processing-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        text-align: center;
+        max-width: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold mb-2">Оплата заказа</h2>
+    <p class="text-secondary">Выберите способ оплаты для завершения заказа</p>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <!-- Информация о заказе -->
+    <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-left">
+                <h3 class="font-semibold text-xl">Заказ #{{ order_id }}</h3>
+                <p class="text-secondary">{{ cart|length }} товар(ов)</p>
+            </div>
+            <div class="text-center md:text-right">
+                <p class="text-lg text-secondary">Сумма к оплате</p>
+                <p class="text-4xl font-bold text-success">{{ total }} ₽</p>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="message error mb-6 animate-pulse">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- Выбор способа оплаты -->
+    <div class="mb-8">
+        <h3 class="font-semibold text-xl mb-4">Выберите способ оплаты:</h3>
+
+        <form action="{{ url_for('process_payment') }}" method="POST" id="payment-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Карта -->
+                <div class="payment-method p-6 rounded-xl bg-white dark:bg-gray-800 shadow-md flex flex-col items-center justify-center text-center {% if not payment_method or payment_method == 'card' %}selected{% endif %}"
+                     onclick="selectPaymentMethod('card')"
+                     id="card-method">
+                    <div class="payment-icon mb-4">💳</div>
+                    <h4 class="font-bold text-lg mb-2">Банковская карта</h4>
+                    <p class="text-secondary text-sm mb-4">Visa, Mastercard, МИР</p>
+                    <div class="text-success font-bold text-xl">{{ total }} ₽</div>
+                    <input type="radio" name="payment_method" value="card" class="hidden" {% if not payment_method or payment_method == 'card' %}checked{% endif %}>
+                </div>
+
+                <!-- СБП -->
+                <div class="payment-method p-6 rounded-xl bg-white dark:bg-gray-800 shadow-md flex flex-col items-center justify-center text-center {% if payment_method == 'sbp' %}selected{% endif %}"
+                     onclick="selectPaymentMethod('sbp')"
+                     id="sbp-method">
+                    <div class="payment-icon mb-4">🏦</div>
+                    <h4 class="font-bold text-lg mb-2">СБП</h4>
+                    <p class="text-secondary text-sm mb-4">Система быстрых платежей</p>
+                    <div class="text-success font-bold text-xl">{{ total }} ₽</div>
+                    <input type="radio" name="payment_method" value="sbp" class="hidden" {% if payment_method == 'sbp' %}checked{% endif %}>
+                </div>
+            </div>
+
+            <!-- Кнопка оплаты -->
+            <div class="text-center">
+                <button type="submit"
+                        id="pay-button"
+                        class="btn btn-success text-lg px-12 py-4 text-xl hover:scale-105 transition-transform duration-300 w-full md:w-auto">
+                    <i class="fas fa-lock mr-2"></i>
+                    Оплатить {{ total }} ₽
+                </button>
+                <p class="text-sm text-secondary mt-2">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Безопасная оплата через защищенное соединение
+                </p>
+            </div>
+        </form>
+    </div>
+
+
+
+    <!-- Навигация -->
+    <div class="flex flex-col sm:flex-row justify-between gap-4">
+        <a href="{{ url_for('view_cart') }}" class="btn btn-secondary hover:scale-105 transition-transform">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Вернуться в корзину
+        </a>
+        <a href="{{ url_for('product_list') }}" class="btn hover:scale-105 transition-transform">
+            <i class="fas fa-store mr-2"></i>
+            Продолжить покупки
+        </a>
+    </div>
+</div>
+
+<!-- Оверлей обработки -->
+<div id="payment-processing" class="payment-processing">
+    <div class="processing-content">
+        <div class="text-5xl mb-4 animate-spin">💳</div>
+        <h4 class="font-bold text-xl mb-2">Обработка платежа</h4>
+        <p class="text-secondary">Пожалуйста, подождите...</p>
+    </div>
+</div>
+
+<script>
+    function selectPaymentMethod(method) {
+        // Убираем выделение у всех методов
+        document.querySelectorAll('.payment-method').forEach(el => {
+            el.classList.remove('selected');
+            el.querySelector('input[type="radio"]').checked = false;
+        });
+
+        // Выделяем выбранный метод
+        const selectedEl = document.getElementById(method + '-method');
+        if (selectedEl) {
+            selectedEl.classList.add('selected');
+            const radio = selectedEl.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
+        // Для тестовых методов показываем предупреждение
+        if (method === 'reject' || method === 'timeout') {
+            alert(`Выбран тестовый метод: ${method === 'reject' ? 'Отказ банка' : 'Таймаут обработки'}`);
+        }
+    }
+
+    function setTestPayment(method) {
+        if (method === 'card' || method === 'sbp') {
+            selectPaymentMethod(method);
+        } else {
+            // Создаем скрытый input для тестового метода
+            let hiddenInput = document.querySelector('input[name="payment_method"][value="' + method + '"]');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'payment_method';
+                hiddenInput.value = method;
+                document.getElementById('payment-form').appendChild(hiddenInput);
+            }
+
+            // Выбираем визуально карту для отображения
+            selectPaymentMethod('card');
+
+            // Показываем информацию о тестовом методе
+            let message = '';
+            if (method === 'reject') {
+                message = 'Тестовый сценарий: Платеж будет отклонен банком';
+            } else if (method === 'timeout') {
+                message = 'Тестовый сценарий: Имитация долгой обработки (10 сек)';
+            }
+
+            alert(message);
+        }
+    }
+
+    // Обработка отправки формы
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('pay-button');
+        const processingOverlay = document.getElementById('payment-processing');
+
+        // Показываем анимацию обработки
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loader"></span> Обработка...';
+
+        processingOverlay.style.display = 'flex';
+
+        // Для тестового таймаута показываем дольше
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+        if (paymentMethod && paymentMethod.value === 'timeout') {
+            setTimeout(() => {
+                processingOverlay.style.display = 'none';
+                // Форма продолжит отправку
+            }, 3000);
+        } else {
+            setTimeout(() => {
+                processingOverlay.style.display = 'none';
+            }, 1000);
+        }
+    });
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkedRadio = document.querySelector('input[name="payment_method"]:checked');
+        if (checkedRadio) {
+            const method = checkedRadio.value;
+            if (method === 'card' || method === 'sbp') {
+                selectPaymentMethod(method);
+            }
+        }
+    });
+</script>
+{% endblock %}

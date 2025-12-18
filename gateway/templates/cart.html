@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина - Фруктовый магазин{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-shopping-cart"></i> Корзина</h1>
+    <p>Ваши выбранные товары</p>
+</div>
+
+{% if cart_items %}
+<div class="cart-container">
+    <div class="cart-items">
+        {% for item in cart_items %}
+        <div class="cart-item" data-product="{{ item.name }}">
+            <div class="cart-item-emoji">{{ item.emoji }}</div>
+            <div class="cart-item-details">
+                <h3>{{ item.name }}</h3>
+                <div class="cart-item-price">{{ item.cost }} ₽ × {{ item.quantity }} = {{ item.total }} ₽</div>
+            </div>
+            <div class="cart-item-actions">
+                <div class="quantity-selector">
+                    <button class="quantity-btn minus" 
+                            onclick="updateCartItem('{{ item.name }}', -1)">-</button>
+                    <input type="number" class="quantity-input cart-quantity" 
+                           value="{{ item.quantity }}" min="0" max="{{ item.max_quantity }}"
+                           onchange="updateCartItemInput('{{ item.name }}', this.value)">
+                    <button class="quantity-btn plus" 
+                            onclick="updateCartItem('{{ item.name }}', 1)">+</button>
+                </div>
+                <button class="btn btn-danger" onclick="removeFromCart('{{ item.name }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="cart-summary">
+        <h2><i class="fas fa-receipt"></i> Итого</h2>
+        <div class="summary-row">
+            <span>Товары ({{ cart_items|length }} шт.)</span>
+            <span>{{ total }} ₽</span>
+        </div>
+        <div class="summary-row total">
+            <span>Общая сумма</span>
+            <span>{{ total }} ₽</span>
+        </div>
+        
+        <div class="cart-actions">
+            <button class="btn btn-secondary" onclick="clearCart()">
+                <i class="fas fa-trash-alt"></i> Очистить корзину
+            </button>
+            <a href="{{ url_for('payment_page') }}" class="btn btn-primary">
+                <i class="fas fa-credit-card"></i> Перейти к оплате
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-cart">
+    <i class="fas fa-shopping-cart fa-4x"></i>
+    <h2>Корзина пуста</h2>
+    <p>Добавьте товары из каталога, чтобы сделать заказ</p>
+    <a href="{{ url_for('products_page') }}" class="btn btn-primary">
+        <i class="fas fa-store"></i> Перейти к товарам
+    </a>
+</div>
+{% endif %}
+
+<div class="notification" id="notification"></div>
+
+<script>
+    function updateCartItem(productName, change) {
+        const input = document.querySelector(`.cart-item[data-product="${productName}"] .cart-quantity`);
+        let value = parseInt(input.value) + change;
+        
+        if (value < 0) value = 0;
+        if (value > parseInt(input.max)) {
+            showNotification('Недостаточно товара на складе', 'error');
+            return;
+        }
+        
+        updateCartItemRequest(productName, value);
+    }
+    
+    function updateCartItemInput(productName, value) {
+        const numValue = parseInt(value);
+        if (isNaN(numValue) || numValue < 0) return;
+        
+        const input = document.querySelector(`.cart-item[data-product="${productName}"] .cart-quantity`);
+        if (numValue > parseInt(input.max)) {
+            showNotification('Недостаточно товара на складе', 'error');
+            input.value = input.max;
+            return;
+        }
+        
+        updateCartItemRequest(productName, numValue);
+    }
+    
+    function updateCartItemRequest(productName, quantity) {
+        fetch('/update_cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: productName,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (quantity === 0) {
+                    // Удаляем элемент из DOM
+                    const item = document.querySelector(`.cart-item[data-product="${productName}"]`);
+                    if (item) item.remove();
+                    
+                    // Если корзина пуста, перезагружаем страницу
+                    if (Object.keys(data.cart).length === 0) {
+                        location.reload();
+                    }
+                } else {
+                    // Обновляем значение в поле ввода
+                    const input = document.querySelector(`.cart-item[data-product="${productName}"] .cart-quantity`);
+                    if (input) input.value = quantity;
+                    
+                    // Обновляем итоговую сумму (нужно обновить всю страницу для простоты)
+                    location.reload();
+                }
+                
+                updateCartCount();
+                showNotification('Корзина обновлена', 'success');
+            } else {
+                showNotification(data.error || 'Ошибка обновления', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Ошибка соединения', 'error');
+        });
+    }
+    
+    function removeFromCart(productName) {
+        updateCartItemRequest(productName, 0);
+    }
+    
+    function clearCart() {
+        if (confirm('Вы уверены, что хотите очистить корзину?')) {
+            fetch('/clear_cart', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+    
+    function showNotification(message, type) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+</script>
+{% endblock %}

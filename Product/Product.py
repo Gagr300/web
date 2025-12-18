@@ -11,3 +11,11 @@ class Product:
             return True
         else:
             return False
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'number': self.number,
+            'cost': self.cost,
+            'emoji': self.emoji
+        }

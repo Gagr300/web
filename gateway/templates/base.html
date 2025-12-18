@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}🍓 Фруктовый магазин{% endblock %}</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="theme-transition-none">
+    <div class="container">
+        <header>
+            <h1>🍓 Фруктовый магазин</h1>
+            <p>Свежие фрукты и овощи прямо с грядки</p>
+        </header>
+
+        <nav>
+            <div class="nav-links">
+                <a href="{{ url_for('product_list') }}" class="nav-link {% if request.endpoint == 'product_list' %}active{% endif %}">
+                    <i class="fas fa-store"></i>
+                    Каталог
+                </a>
+                <a href="{{ url_for('view_cart') }}" class="nav-link {% if request.endpoint == 'view_cart' %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    Корзина
+                </a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Кнопка переключения темы -->
+                <button class="theme-toggle p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-110 transition-transform duration-200"
+                        aria-label="Переключить тему"
+                        id="themeToggleButton">
+                    <span class="text-xl transition-all duration-300" id="themeIcon">🌙</span>
+                </button>
+
+                <!-- Иконка корзины -->
+                <a href="{{ url_for('view_cart') }}"
+                   class="cart-indicator {% if not session.get('cart') %}empty{% endif %} hover:scale-110 transition-transform"
+                   title="{% if session.get('cart') %}Корзина{% else %}Корзина пуста{% endif %}">
+                    {% if session.get('cart') %}
+                        🛒
+                    {% else %}
+                        🛒
+                    {% endif %}
+                </a>
+            </div>
+        </nav>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <p>&copy; 2024 Фруктовый магазин 🍓</p>
+                    <p class="text-secondary">Сделано с ❤️ для любителей свежих фруктов</p>
+                </div>
+                <div class="flex gap-4 text-xl">
+                    <span title="Вкусно">😋</span>
+                    <span title="Свежо">🍃</span>
+                    <span title="Натурально">🌱</span>
+                    <span title="Полезно">💪</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Передаем данные корзины из шаблона в JavaScript
+        window.cartData = {{ session.get('cart', {})|tojson|safe }};
+        window.appConfig = {
+            cartTotal: {{ session.cart.values()|sum if session.get('cart') else 0 }},
+            theme: localStorage.getItem('fruitShopTheme') || 'light'
+        };
+    </script>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Скрипт для управления темами -->
+    <script>
+        // Управление переключением тем
+        class ThemeManager {
+            constructor() {
+                this.themeButton = document.getElementById('themeToggleButton');
+                this.themeIcon = document.getElementById('themeIcon');
+                this.init();
+            }
+
+            init() {
+                // Загружаем сохраненную тему
+                const savedTheme = localStorage.getItem('fruitShopTheme') || 'light';
+                this.setTheme(savedTheme, false); // false = без анимации
+
+                // Вешаем обработчик на кнопку
+                if (this.themeButton) {
+                    this.themeButton.addEventListener('click', () => this.toggleTheme());
+                }
+
+                // Убираем класс отключения анимаций после загрузки
+                setTimeout(() => {
+                    document.body.classList.remove('theme-transition-none');
+                }, 100);
+            }
+
+            toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                this.setTheme(newTheme, true); // true = с анимацией
+            }
+
+            setTheme(theme, animate = true) {
+                const html = document.documentElement;
+
+                if (!this.themeIcon) return;
+
+                if (animate) {
+                    // Анимация переключения
+                    this.themeIcon.style.opacity = '0';
+                    this.themeIcon.style.transform = 'scale(0.5) rotate(-90deg)';
+
+                    setTimeout(() => {
+                        // Меняем тему
+                        html.setAttribute('data-theme', theme);
+                        localStorage.setItem('fruitShopTheme', theme);
+
+                        // Меняем иконку
+                        this.themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+
+                        // Анимация появления
+                        this.themeIcon.style.opacity = '1';
+                        this.themeIcon.style.transform = 'scale(1) rotate(0deg)';
+                    }, 150);
+                } else {
+                    // Без анимации (при загрузке)
+                    html.setAttribute('data-theme', theme);
+                    this.themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+                    this.themeIcon.style.opacity = '1';
+                }
+            }
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            window.themeManager = new ThemeManager();
+        });
+    </script>
+
+    <style>
+        #themeIcon {
+            display: inline-block;
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        .theme-toggle:hover #themeIcon {
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-3px) rotate(12deg); }
+        }
+    </style>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

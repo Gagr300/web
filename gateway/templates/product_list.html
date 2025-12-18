@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог продуктов - Фруктовый магазин{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold mb-2">Наши продукты</h2>
+    <p class="text-secondary">Выберите свежие фрукты и овощи для добавления в корзину</p>
+</div>
+
+{% if products %}
+<div class="product-grid">
+    {% for product in products %}
+    <div class="product-card">
+        <div class="product-emoji">{{ product.emoji }}</div>
+        <h3 class="product-name">{{ product.name|capitalize }}</h3>
+        <p class="product-price">{{ product.cost }} ₽</p>
+
+        <p class="product-stock {% if product.number <= 5 %}low{% endif %}">
+            {% if product.number > 10 %}
+            <i class="fas fa-check-circle text-success"></i>
+            В наличии: {{ product.number }} шт.
+            {% elif product.number > 0 and product.number <= 10 %}
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            Осталось мало: {{ product.number }} шт.
+            {% else %}
+            <i class="fas fa-times-circle text-danger"></i>
+            Нет в наличии
+            {% endif %}
+        </p>
+
+        <div class="quantity-control">
+            <button class="quantity-btn minus" onclick="this.nextElementSibling.stepDown()">
+                <i class="fas fa-minus"></i>
+            </button>
+            <input type="number"
+                   id="quantity-{{ product.name }}"
+                   class="quantity-input"
+                   value="1"
+                   min="1"
+                   max="{{ product.number }}"
+                   {% if product.number <= 0 %}disabled{% endif %}>
+            <button class="quantity-btn plus" onclick="this.previousElementSibling.stepUp()">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <button class="btn w-full mt-auto add-to-cart-btn"
+                data-product-name="{{ product.name }}"
+                {% if product.number <= 0 %}disabled{% endif %}>
+            <i class="fas fa-cart-plus"></i>
+            Добавить в корзину
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center p-8">
+    <div class="text-6xl mb-4">😢</div>
+    <h3 class="text-xl font-semibold mb-2">Продукты временно недоступны</h3>
+    <p class="text-secondary">Попробуйте зайти позже</p>
+</div>
+{% endif %}
+
+<div class="mt-8 text-center">
+    {% if session.get('cart') %}
+        <a href="{{ url_for('view_cart') }}" class="btn btn-success text-lg">
+            <i class="fas fa-arrow-right"></i>
+            Перейти к оформлению ({{ session.cart.values()|sum }} товаров)
+        </a>
+    {% else %}
+        <div class="inline-flex flex-col gap-2">
+            <p class="text-secondary"><i class="fas fa-info-circle"></i> Добавьте товары в корзину, чтобы продолжить</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="btn btn-secondary">
+                    <i class="fas fa-arrow-up"></i>
+                    Наверх
+                </button>
+                <a href="#products" class="btn">
+                    <i class="fas fa-shopping-basket"></i>
+                    К продуктам
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
