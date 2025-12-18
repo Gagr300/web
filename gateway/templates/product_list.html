@@ -56,32 +56,8 @@
 </div>
 {% else %}
 <div class="text-center p-8">
-    <div class="text-6xl mb-4">😢</div>
     <h3 class="text-xl font-semibold mb-2">Продукты временно недоступны</h3>
     <p class="text-secondary">Попробуйте зайти позже</p>
 </div>
 {% endif %}
-
-<div class="mt-8 text-center">
-    {% if session.get('cart') %}
-        <a href="{{ url_for('view_cart') }}" class="btn btn-success text-lg">
-            <i class="fas fa-arrow-right"></i>
-            Перейти к оформлению ({{ session.cart.values()|sum }} товаров)
-        </a>
-    {% else %}
-        <div class="inline-flex flex-col gap-2">
-            <p class="text-secondary"><i class="fas fa-info-circle"></i> Добавьте товары в корзину, чтобы продолжить</p>
-            <div class="flex gap-4 justify-center">
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="btn btn-secondary">
-                    <i class="fas fa-arrow-up"></i>
-                    Наверх
-                </button>
-                <a href="#products" class="btn">
-                    <i class="fas fa-shopping-basket"></i>
-                    К продуктам
-                </a>
-            </div>
-        </div>
-    {% endif %}
-</div>
 {% endblock %}

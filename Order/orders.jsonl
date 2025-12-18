@@ -20,3 +20,5 @@
 {"id": 11, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:24.972165", "status": "Done"}
 {"id": 12, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:46.337583", "status": "In progress"}
 {"id": 12, "products_amount": {"морковь": 1}, "date": "2025-12-18T23:16:46.337583", "status": "Done"}
+{"id": 13, "products_amount": {"банан": 4, "морковь": 1}, "date": "2025-12-18T23:22:27.525096", "status": "In progress"}
+{"id": 13, "products_amount": {"банан": 4, "морковь": 1}, "date": "2025-12-18T23:22:27.525096", "status": "Done"}
