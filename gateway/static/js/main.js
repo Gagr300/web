@@ -398,7 +398,8 @@ class CartManager {
 
                 // Перезагрузка через секунду
                 setTimeout(() => {
-                    window.location.href = "{{ url_for('product_list') }}";
+                    const productListUrl = document.getElementById('urls-data')?.dataset?.productListUrl || '/';
+                    window.location.href = productListUrl;
                 }, 1000);
             }
         } catch (error) {

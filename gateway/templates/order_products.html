@@ -289,6 +289,11 @@
 </div>
 {% endif %}
 
+<div id="urls-data"
+     data-product-list-url="{{ url_for('product_list') }}"
+     style="display: none;">
+</div>
+
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {

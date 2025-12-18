@@ -2,3 +2,6 @@
 {"id": 1, "products_amount": {"банан": 3, "лимон": 4, "морковь": 3}, "date": "2025-12-18T23:42:33.202898", "status": "Done"}
 {"id": 2, "products_amount": {"банан": 1}, "date": "2025-12-18T23:51:27.036920", "status": "In progress"}
 {"id": 2, "products_amount": {"банан": 1}, "date": "2025-12-18T23:51:27.036920", "status": "Done"}
+{"id": 3, "products_amount": {"банан": 3, "лимон": 4, "морковь": 3}, "date": "2025-12-18T23:59:14.477300", "status": "In progress"}
+{"id": 4, "products_amount": {"лимон": 1}, "date": "2025-12-18T23:59:20.677485", "status": "In progress"}
+{"id": 4, "products_amount": {"лимон": 1}, "date": "2025-12-18T23:59:20.677485", "status": "Done"}
