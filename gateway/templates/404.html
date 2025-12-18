@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница не найдена - Фруктовый магазин</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+</head>
+<body data-theme="light">
+    <div class="container" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="text-center">
+            <div class="text-8xl mb-6">🔍</div>
+            <h1 class="text-4xl font-bold mb-4">404 - Страница не найдена</h1>
+            <p class="text-secondary mb-6">Извините, запрашиваемая страница не существует.</p>
+            <a href="{{ url_for('product_list') }}" class="btn">
+                <i class="fas fa-home mr-2"></i>
+                Вернуться на главную
+            </a>
+        </div>
+    </div>
+</body>
+</html>

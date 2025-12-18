@@ -30,7 +30,8 @@
         </p>
 
         <div class="quantity-control">
-            <button class="quantity-btn minus" onclick="this.nextElementSibling.stepDown()">
+            <!-- Убраны onclick обработчики -->
+            <button class="quantity-btn minus" data-product-name="{{ product.name }}">
                 <i class="fas fa-minus"></i>
             </button>
             <input type="number"
@@ -40,7 +41,7 @@
                    min="1"
                    max="{{ product.number }}"
                    {% if product.number <= 0 %}disabled{% endif %}>
-            <button class="quantity-btn plus" onclick="this.previousElementSibling.stepUp()">
+            <button class="quantity-btn plus" data-product-name="{{ product.name }}">
                 <i class="fas fa-plus"></i>
             </button>
         </div>

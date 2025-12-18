@@ -104,33 +104,61 @@ class CartManager {
     }
 
     initProductPageControls() {
-        // Кнопки + и - на странице продуктов
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.quantity-btn.plus') || e.target.closest('.quantity-btn.plus')) {
-                const button = e.target.matches('.quantity-btn.plus') ? e.target : e.target.closest('.quantity-btn.plus');
-                const input = button.previousElementSibling;
-                if (input && input.type === 'number') {
-                    const max = parseInt(input.max) || 100;
-                    const currentValue = parseInt(input.value) || 1;
-                    if (currentValue < max) {
-                        input.value = currentValue + 1;
-                    }
+    // Кнопки + и - на странице продуктов
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('.quantity-btn.plus') || e.target.closest('.quantity-btn.plus')) {
+            const button = e.target.matches('.quantity-btn.plus') ? e.target : e.target.closest('.quantity-btn.plus');
+            const input = button.previousElementSibling;
+            if (input && input.type === 'number' && !input.disabled) {
+                const max = parseInt(input.max) || 100;
+                const currentValue = parseInt(input.value) || 1;
+                if (currentValue < max) {
+                    input.value = currentValue + 1;
+                    // Генерируем событие change для обновления UI
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+            }
+            e.stopPropagation(); // Предотвращаем дальнейшую обработку
+        }
+
+        if (e.target.matches('.quantity-btn.minus') || e.target.closest('.quantity-btn.minus')) {
+            const button = e.target.matches('.quantity-btn.minus') ? e.target : e.target.closest('.quantity-btn.minus');
+            const input = button.nextElementSibling;
+            if (input && input.type === 'number' && !input.disabled) {
+                const min = parseInt(input.min) || 1;
+                const currentValue = parseInt(input.value) || 1;
+                if (currentValue > min) {
+                    input.value = currentValue - 1;
+                    // Генерируем событие change для обновления UI
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            e.stopPropagation(); // Предотвращаем дальнейшую обработку
+        }
+    });
+
+    // Обработка прямого ввода в поле количества
+    document.addEventListener('change', (e) => {
+        if (e.target.matches('.quantity-input')) {
+            const input = e.target;
+            const max = parseInt(input.max) || 100;
+            const min = parseInt(input.min) || 1;
+            let value = parseInt(input.value) || min;
+
+            // Валидация значения
+            if (value > max) {
+                value = max;
+                this.showNotification(`Максимальное количество: ${max}`, 'warning');
+            } else if (value < min) {
+                value = min;
             }
 
-            if (e.target.matches('.quantity-btn.minus') || e.target.closest('.quantity-btn.minus')) {
-                const button = e.target.matches('.quantity-btn.minus') ? e.target : e.target.closest('.quantity-btn.minus');
-                const input = button.nextElementSibling;
-                if (input && input.type === 'number') {
-                    const min = parseInt(input.min) || 1;
-                    const currentValue = parseInt(input.value) || 1;
-                    if (currentValue > min) {
-                        input.value = currentValue - 1;
-                    }
-                }
+            if (value !== parseInt(input.value)) {
+                input.value = value;
             }
-        });
-    }
+        }
+    });
+}
 
     async addToCartFromButton(button) {
         const productName = button.dataset.productName;
