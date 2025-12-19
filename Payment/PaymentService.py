@@ -1,5 +1,6 @@
 import threading
-
+import time
+from .Payment import Payment
 
 class PaymentService:
     _instance = None
@@ -13,18 +14,12 @@ class PaymentService:
 
     def process_payment(self, order_id, payment_method):
         """Обработать платеж"""
-        # Здесь может быть логика обработки платежей через различные системы
-        # В данном примере просто имитируем успешный платеж
-        from .Payment import Payment
         payment = Payment()
 
-        # Имитация различных сценариев
         if payment_method == 'reject':
             payment.done = False
         elif payment_method == 'timeout':
-            # Имитация таймаута
-            import time
-            time.sleep(10)  # Долгая обработка
+            time.sleep(10)
 
         return payment
 
@@ -35,7 +30,6 @@ class PaymentService:
             product = self.products[name]
             if product.number >= quantity:
                 product.number -= quantity
-                # Сохраняем изменения в файл
                 self._save_products()
                 return {'success': True, 'new_stock': product.number}
             else:

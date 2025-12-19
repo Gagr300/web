@@ -1,6 +1,4 @@
-/**
- * Main JavaScript для управления корзиной и взаимодействием с интерфейсом
- */
+/* для управления корзиной и взаимодействием с интерфейсом  */
 class CartManager {
     constructor() {
         this.init();
@@ -145,7 +143,6 @@ class CartManager {
             const min = parseInt(input.min) || 1;
             let value = parseInt(input.value) || min;
 
-            // Валидация значения
             if (value > max) {
                 value = max;
                 this.showNotification(`Максимальное количество: ${max}`, 'warning');
@@ -473,7 +470,7 @@ class CartManager {
 
         document.body.appendChild(notification);
 
-        // Удаляем уведомление через 3 секунды
+        // Удаление уведомления через 3 секунды
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease-out';
             setTimeout(() => {

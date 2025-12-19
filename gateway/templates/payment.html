@@ -231,18 +231,16 @@
         const submitBtn = document.getElementById('pay-button');
         const processingOverlay = document.getElementById('payment-processing');
 
-        // Показываем анимацию обработки
+        // Анимация обработки
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="loader"></span> Обработка...';
 
         processingOverlay.style.display = 'flex';
 
-        // Для тестового таймаута показываем дольше
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
         if (paymentMethod && paymentMethod.value === 'timeout') {
             setTimeout(() => {
                 processingOverlay.style.display = 'none';
-                // Форма продолжит отправку
             }, 3000);
         } else {
             setTimeout(() => {

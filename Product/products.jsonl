@@ -1,5 +1,5 @@
-{"name": "яблоко", "number": 0, "cost": 50, "emoji": "🍎"}
-{"name": "банан", "number": 24, "cost": 150, "emoji": "🍌"}
+{"name": "яблоко", "number": 5, "cost": 50, "emoji": "🍎"}
+{"name": "банан", "number": 22, "cost": 150, "emoji": "🍌"}
 {"name": "апельсин", "number": 9, "cost": 155, "emoji": "🍊"}
 {"name": "груша", "number": 6, "cost": 121, "emoji": "🍐"}
 {"name": "лимон", "number": 10, "cost": 45, "emoji": "🍋"}
@@ -7,5 +7,5 @@
 {"name": "манго", "number": 13, "cost": 180, "emoji": "🥭"}
 {"name": "морковь", "number": 67, "cost": 16, "emoji": "🥕"}
 {"name": "арбуз", "number": 13, "cost": 116, "emoji": "🍉"}
-{"name": "голубика", "number": 0, "cost": 121, "emoji": "🫐"}
+{"name": "голубика", "number": 2, "cost": 121, "emoji": "🫐"}
 {"name": "черника", "number": 0, "cost": 111, "emoji": "🫐"}

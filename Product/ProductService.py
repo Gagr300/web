@@ -1,22 +1,7 @@
-# ProductService.py (исправленная версия)
 import json
 import os
 import threading
-
-
-class Product:
-    def __init__(self, name, number, cost=0, emoji=''):
-        self.name = name
-        self.number = number
-        self.cost = cost
-        self.emoji = emoji
-
-    def buy(self, number):
-        if self.number >= number:
-            self.number -= number
-            return True
-        else:
-            return False
+from .Product import Product
 
 
 class ProductService:
@@ -53,12 +38,7 @@ class ProductService:
             initial_products = [
                 {'name': 'яблоко', 'number': 30, 'cost': 50, 'emoji': '🍎'},
                 {'name': 'банан', 'number': 65, 'cost': 150, 'emoji': '🍌'},
-                {'name': 'апельсин', 'number': 10, 'cost': 155, 'emoji': '🍊'},
-                {'name': 'груша', 'number': 7, 'cost': 121, 'emoji': '🍐'},
-                {'name': 'лимон', 'number': 18, 'cost': 45, 'emoji': '🍋'},
-                {'name': 'персик', 'number': 24, 'cost': 80, 'emoji': '🍑'},
-                {'name': 'манго', 'number': 16, 'cost': 180, 'emoji': '🥭'},
-                {'name': 'морковь', 'number': 74, 'cost': 16, 'emoji': '🥕'}
+                {'name': 'апельсин', 'number': 10, 'cost': 155, 'emoji': '🍊'}
             ]
 
             with open(self.data_file, 'w', encoding='utf-8') as f:

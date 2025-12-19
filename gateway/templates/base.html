@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}🍓 Фруктовый магазин{% endblock %}</title>
+    <title>{% block title %}🍓 Магазинчик{% endblock %}</title>
 
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -82,7 +82,6 @@
         </footer>
     </div>
 
-    <!-- JavaScript -->
     <script>
         // Передаем данные корзины из шаблона в JavaScript
         window.cartData = {{ session.get('cart', {})|tojson|safe }};
@@ -96,7 +95,6 @@
 
     <!-- Скрипт для управления темами -->
     <script>
-        // Управление переключением тем
         class ThemeManager {
             constructor() {
                 this.themeButton = document.getElementById('themeToggleButton');

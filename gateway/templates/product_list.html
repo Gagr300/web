@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Каталог продуктов - Фруктовый магазин{% endblock %}
+{% block title %}Каталог продуктов - Магазинчик{% endblock %}
 
 {% block content %}
 <div class="mb-8">
@@ -30,7 +30,6 @@
         </p>
 
         <div class="quantity-control">
-            <!-- Убраны onclick обработчики -->
             <button class="quantity-btn minus" data-product-name="{{ product.name }}">
                 <i class="fas fa-minus"></i>
             </button>
