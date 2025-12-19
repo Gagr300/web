@@ -244,11 +244,16 @@ def process_payment():
             # Сохраняем ID заказа для страницы успеха
             completed_order_id = order_id
 
-            # Очищаем сессию ПОСЛЕ успешной обработки
+            # ОЧИСТКА КОРЗИНЫ ПОСЛЕ УСПЕШНОЙ ОПЛАТЫ
+            # 1. Очищаем сессию
             session.pop('cart', None)
             session.pop('current_order_id', None)
             session.pop('order_total', None)
             session.modified = True
+
+            # 2. Устанавливаем флаг для очистки локального хранилища на клиенте
+            session['payment_success'] = True
+            session['cleared_order_id'] = completed_order_id
 
             flash('Платеж успешно обработан! Заказ оформлен.', 'success')
             return redirect(url_for('success_page', order_id=completed_order_id))
@@ -261,6 +266,33 @@ def process_payment():
         flash(f'Ошибка при обработке платежа: {str(e)}', 'error')
         return redirect(url_for('payment_page'))
 
+
+@app.route('/clear_client_cart', methods=['POST'])
+def clear_client_cart():
+    """API для очистки корзины на клиенте после успешной оплаты"""
+    try:
+        # Проверяем, была ли успешная оплата
+        if session.get('payment_success'):
+            order_id = session.get('cleared_order_id')
+
+            # Очищаем флаги
+            session.pop('payment_success', None)
+            session.pop('cleared_order_id', None)
+            session.modified = True
+
+            return jsonify({
+                'success': True,
+                'message': 'Корзина очищена после оплаты',
+                'order_id': order_id,
+                'cart': {}
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Нет данных об успешной оплате'
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/success')
 def success_page():

@@ -14,36 +14,78 @@
         <p class="text-secondary">
             Мы свяжемся с вами для подтверждения доставки.
         </p>
+        <p class="text-sm mt-4 text-green-600 dark:text-green-400">
+            <i class="fas fa-shopping-cart mr-2"></i>Корзина автоматически очищена
+        </p>
     </div>
 
-    <div class="success-details bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg mb-8 max-w-md mx-auto">
-        <div class="detail-item flex justify-between mb-4 pb-4 border-b dark:border-gray-700">
-            <span class="detail-label text-secondary">Номер заказа:</span>
-            <span class="detail-value font-bold">{{ order_id }}</span>
-        </div>
-        <div class="detail-item flex justify-between">
-            <span class="detail-label text-secondary">Статус:</span>
-            <span class="detail-value font-bold text-green-600 dark:text-green-400">
-                <i class="fas fa-check-circle mr-2"></i>Оплачен
-            </span>
-        </div>
-    </div>
-
-    <div class="success-actions flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="{{ url_for('product_list') }}" class="btn btn-success text-lg px-8 py-3 hover:scale-105 transition-transform">
-            <i class="fas fa-store mr-2"></i>
-            Продолжить покупки
-        </a>
-        <a href="/" class="btn text-lg px-8 py-3 hover:scale-105 transition-transform">
-            <i class="fas fa-home mr-2"></i>
-            На главную
-        </a>
-    </div>
+    <!-- Остальная часть шаблона без изменений... -->
 
     <div class="mt-8 text-sm text-secondary">
         <p><i class="fas fa-info-circle mr-2"></i>Информация о доставке будет отправлена на ваш email</p>
     </div>
 </div>
+
+<script>
+    // Автоматическая очистка корзины после успешной оплаты
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Очищаем локальное хранилище
+        localStorage.removeItem('fruitShopCart');
+
+        // 2. Сбрасываем глобальную переменную
+        if (window.cartData) {
+            window.cartData = {};
+        }
+
+        // 3. Обновляем индикатор корзины
+        const cartIndicator = document.querySelector('.cart-indicator');
+        if (cartIndicator) {
+            cartIndicator.innerHTML = '🛒';
+            cartIndicator.classList.add('empty');
+        }
+
+        // 4. Отправляем запрос на сервер для подтверждения очистки
+        fetch('/clear_client_cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => response.json())
+          .then(data => {
+              console.log('Корзина очищена после оплаты:', data.message);
+          })
+          .catch(error => {
+              console.error('Ошибка при очистке корзины:', error);
+          });
+
+        // 5. Показываем уведомление
+        setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.className = 'message success fixed-notification';
+            notification.innerHTML = `
+                <i class="fas fa-check-circle mr-2"></i>
+                Корзина очищена после успешной оплаты
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }, 1000);
+    });
+</script>
 
 <style>
 .success-container {
@@ -62,6 +104,14 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Стили для уведомления об очистке корзины */
+.fixed-notification {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 10000 !important;
 }
 </style>
 {% endblock %}

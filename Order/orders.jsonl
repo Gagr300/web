@@ -14,3 +14,9 @@
 {"id": 9, "products_amount": {"банан": 4}, "date": "2025-12-19T11:32:06.129210", "status": "In progress"}
 {"id": 10, "products_amount": {"банан": 3}, "date": "2025-12-19T11:32:20.767983", "status": "In progress"}
 {"id": 10, "products_amount": {"банан": 3}, "date": "2025-12-19T11:32:20.767983", "status": "Done"}
+{"id": 11, "products_amount": {"банан": 3}, "date": "2025-12-19T11:43:08.456647", "status": "In progress"}
+{"id": 11, "products_amount": {"банан": 3}, "date": "2025-12-19T11:43:08.456647", "status": "Done"}
+{"id": 12, "products_amount": {"банан": 2}, "date": "2025-12-19T11:45:30.523586", "status": "In progress"}
+{"id": 12, "products_amount": {"банан": 2}, "date": "2025-12-19T11:45:30.523586", "status": "Done"}
+{"id": 13, "products_amount": {"банан": 4}, "date": "2025-12-19T11:47:25.102624", "status": "In progress"}
+{"id": 13, "products_amount": {"банан": 4}, "date": "2025-12-19T11:47:25.102624", "status": "Done"}
