@@ -1,6 +1,7 @@
-/* для управления корзиной и взаимодействием с интерфейсом  */
 class CartManager {
     constructor() {
+        this.syncInProgress = false;
+        this.pendingSync = null;
         this.init();
     }
 
@@ -8,16 +9,19 @@ class CartManager {
         this.loadCartFromStorage();
         this.updateCartIndicator();
         this.setupEventListeners();
+
+        // Синхронизация при загрузке страницы
+        setTimeout(() => this.syncCartWithServer(), 1000);
     }
 
-    loadCartFromStorage() {
+    async loadCartFromStorage() {
         const savedCart = localStorage.getItem('fruitShopCart');
         if (savedCart) {
             try {
                 const cart = JSON.parse(savedCart);
                 if (cart && typeof cart === 'object') {
                     // Отправляем данные на сервер для синхронизации
-                    this.syncCartWithServer(cart);
+                    await this.syncCartState(cart);
                 }
             } catch (e) {
                 console.error('Failed to load cart from storage:', e);
@@ -25,23 +29,273 @@ class CartManager {
         }
     }
 
-    async syncCartWithServer(cart) {
+    async syncCartState(clientCart) {
+        // Если уже идет синхронизация, откладываем запрос
+        if (this.syncInProgress) {
+            this.pendingSync = clientCart;
+            return;
+        }
+
+        this.syncInProgress = true;
+
         try {
-            const response = await fetch('/api/sync_cart', {
+            const response = await fetch('/sync_cart_state', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ cart })
+                body: JSON.stringify({ cart: clientCart })
             });
 
-            if (!response.ok) {
-                throw new Error('Sync failed');
+            const data = await response.json();
+
+            if (data.success) {
+                // Обновляем локальное хранилище синхронизированной корзиной
+                localStorage.setItem('fruitShopCart', JSON.stringify(data.cart));
+
+                // Обновляем глобальную переменную
+                window.cartData = data.cart;
+
+                // Обновляем индикатор
+                this.updateCartIndicator(data.cart_total);
+
+                // Обновляем страницу если нужно
+                if (window.location.pathname.includes('/cart')) {
+                    this.refreshCartPage();
+                }
             }
         } catch (error) {
-            console.error('Failed to sync cart:', error);
+            console.error('Failed to sync cart state:', error);
+        } finally {
+            this.syncInProgress = false;
+
+            // Обрабатываем отложенный запрос
+            if (this.pendingSync) {
+                const pending = this.pendingSync;
+                this.pendingSync = null;
+                await this.syncCartState(pending);
+            }
         }
     }
+
+    async syncCartWithServer() {
+        // Получаем текущее состояние корзины с сервера
+        try {
+            const response = await fetch('/api/cart');
+            const data = await response.json();
+
+            if (data.success) {
+                // Обновляем локальное хранилище
+                localStorage.setItem('fruitShopCart', JSON.stringify(data.cart));
+                window.cartData = data.cart;
+                this.updateCartIndicator(data.count);
+
+                // Если на странице корзины - обновляем отображение
+                if (window.location.pathname.includes('/cart')) {
+                    this.refreshCartPage();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to sync with server:', error);
+        }
+    }
+
+    async addToCart(productName, quantity) {
+        if (quantity <= 0) {
+            throw new Error('Количество должно быть больше 0');
+        }
+
+        try {
+            const response = await fetch('/add_to_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            // Обновляем локальное хранилище
+            const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
+            currentCart[productName] = (currentCart[productName] || 0) + quantity;
+            localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
+            window.cartData = currentCart;
+
+            this.updateCartIndicator(data.cart_total);
+            this.showNotification(data.message, 'success');
+
+            return data;
+
+        } catch (error) {
+            this.showNotification(error.message, 'error');
+            throw error;
+        }
+    }
+
+    async updateCartItem(productName, quantity) {
+        if (quantity < 0) return;
+
+        try {
+            const response = await fetch('/update_cart_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Обновляем локальное хранилище
+                const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
+
+                if (quantity === 0) {
+                    delete currentCart[productName];
+                } else {
+                    currentCart[productName] = quantity;
+                }
+
+                localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
+                window.cartData = currentCart;
+
+                // Обновляем UI если на странице корзины
+                if (window.location.pathname.includes('/cart')) {
+                    if (quantity === 0) {
+                        this.removeCartItemFromUI(productName);
+                    } else {
+                        this.updateCartItemInUI(productName, quantity, data);
+                    }
+
+                    // Обновляем итоговую сумму
+                    this.updateCartTotal(data.total_cost);
+
+                    // Если корзина пуста, перезагружаем страницу
+                    if (Object.keys(currentCart).length === 0) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                }
+
+                // Обновляем индикатор
+                this.updateCartIndicator(data.cart_total);
+
+                this.showNotification('Корзина обновлена', 'success');
+            }
+        } catch (error) {
+            console.error('Failed to update cart item:', error);
+            this.showNotification('Ошибка при обновлении количества', 'error');
+        }
+    }
+
+    removeCartItemFromUI(productName) {
+        const row = document.querySelector(`[data-product="${productName}"]`);
+        if (row) {
+            row.style.transform = 'translateX(100%)';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                if (row.parentNode) {
+                    row.parentNode.removeChild(row);
+                }
+            }, 300);
+        }
+    }
+
+    updateCartItemInUI(productName, quantity, data) {
+        const row = document.querySelector(`[data-product="${productName}"]`);
+        if (row) {
+            // Обновляем input значение
+            const input = row.querySelector('.cart-quantity-input');
+            if (input) {
+                input.value = quantity;
+            }
+
+            // Обновляем сумму для конкретного товара
+            const itemData = data.items.find(item => item.name === productName);
+            if (itemData) {
+                const totalCell = row.querySelector('.item-total');
+                if (totalCell) {
+                    totalCell.textContent = `${itemData.total} ₽`;
+                    totalCell.classList.add('updated');
+                    setTimeout(() => totalCell.classList.remove('updated'), 500);
+                }
+            }
+
+            // Обновляем состояние кнопок
+            this.updateButtonStates(productName, quantity, row);
+
+            // Анимация строки
+            row.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+            }, 500);
+        }
+    }
+
+    async clearCart() {
+        if (!confirm('Вы уверены, что хотите очистить корзину?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/clear_cart', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Очищаем локальное хранилище
+                localStorage.removeItem('fruitShopCart');
+                window.cartData = {};
+
+                this.updateCartIndicator(0);
+                this.updateCartTotal(0);
+
+                this.showNotification('Корзина очищена', 'success');
+
+                // Если на странице корзины - перезагружаем
+                if (window.location.pathname.includes('/cart')) {
+                    // Анимация очистки
+                    const rows = document.querySelectorAll('[data-product]');
+                    rows.forEach((row, index) => {
+                        setTimeout(() => {
+                            row.style.transform = 'translateX(100%)';
+                            row.style.opacity = '0';
+                        }, index * 100);
+                    });
+
+                    // Перезагрузка через секунду
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to clear cart:', error);
+            this.showNotification('Ошибка при очистке корзины', 'error');
+        }
+    }
+
+    refreshCartPage() {
+        // Проверяем, нужно ли обновить страницу
+        const currentProducts = document.querySelectorAll('[data-product]').length;
+        const serverProductCount = Object.keys(window.cartData || {}).length;
+
+        if (currentProducts !== serverProductCount) {
+            // Если количество товаров отличается, перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+        }
+    }
+
 
     setupEventListeners() {
         // Обработка кликов по кнопкам добавления в корзину
@@ -195,90 +449,6 @@ class CartManager {
         }
     }
 
-    async addToCart(productName, quantity) {
-        if (quantity <= 0) {
-            throw new Error('Количество должно быть больше 0');
-        }
-
-        const response = await fetch('/add_to_cart', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.message);
-        }
-
-        this.updateCartIndicator(data.cart_total);
-        this.saveCartToStorage();
-
-        return data;
-    }
-
-    async updateCartItem(productName, quantity) {
-        if (quantity < 0) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/update_cart_item', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Обновляем общую сумму корзины
-                this.updateCartTotal(data.total_cost);
-
-                // Находим строку с товаром
-                const row = document.querySelector(`[data-product="${productName}"]`);
-                if (row) {
-                    // Обновляем сумму для конкретного товара
-                    const totalCell = row.querySelector('.item-total');
-                    if (totalCell) {
-                        // Находим обновленную сумму для этого товара
-                        const itemData = data.items.find(item => item.name === productName);
-                        if (itemData) {
-                            totalCell.textContent = `${itemData.total} ₽`;
-                            // Анимация обновления
-                            totalCell.classList.add('updated');
-                            setTimeout(() => totalCell.classList.remove('updated'), 500);
-                        }
-                    }
-
-                    // Обновляем input значение
-                    const input = row.querySelector('.cart-quantity-input');
-                    if (input) {
-                        input.value = quantity;
-                    }
-
-                    // Обновляем состояние кнопок
-                    this.updateButtonStates(productName, quantity, row);
-
-                    // Анимация строки
-                    row.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-                    setTimeout(() => {
-                        row.style.backgroundColor = '';
-                    }, 500);
-                }
-
-                this.saveCartToStorage();
-            }
-        } catch (error) {
-            console.error('Failed to update cart item:', error);
-            this.showNotification('Ошибка при обновлении количества', 'error');
-        }
-    }
 
     updateButtonStates(productName, quantity, row) {
         if (!row) {
@@ -364,45 +534,6 @@ class CartManager {
         }
 
         this.showNotification(`${productName} удален из корзины`, 'success');
-    }
-
-    async clearCart() {
-        if (!confirm('Вы уверены, что хотите очистить корзину?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/clear_cart', {
-                method: 'POST'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.updateCartIndicator(0);
-                this.updateCartTotal(0);
-                this.saveCartToStorage();
-                this.showNotification('Корзина очищена', 'success');
-
-                // Анимация очистки
-                const rows = document.querySelectorAll('[data-product]');
-                rows.forEach((row, index) => {
-                    setTimeout(() => {
-                        row.style.transform = 'translateX(100%)';
-                        row.style.opacity = '0';
-                    }, index * 100);
-                });
-
-                // Перезагрузка через секунду
-                setTimeout(() => {
-                    const productListUrl = document.getElementById('urls-data')?.dataset?.productListUrl || '/';
-                    window.location.href = productListUrl;
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('Failed to clear cart:', error);
-            this.showNotification('Ошибка при очистке корзины', 'error');
-        }
     }
 
     updateCartIndicator(total) {

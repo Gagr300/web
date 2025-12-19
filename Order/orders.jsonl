@@ -7,3 +7,10 @@
 {"id": 4, "products_amount": {"лимон": 1}, "date": "2025-12-18T23:59:20.677485", "status": "Done"}
 {"id": 5, "products_amount": {"банан": 3}, "date": "2025-12-19T11:02:54.789491", "status": "In progress"}
 {"id": 5, "products_amount": {"банан": 3}, "date": "2025-12-19T11:02:54.789491", "status": "Done"}
+{"id": 6, "products_amount": {"апельсин": 2, "банан": 2}, "date": "2025-12-19T11:29:50.165824", "status": "In progress"}
+{"id": 7, "products_amount": {"апельсин": 2, "банан": 2}, "date": "2025-12-19T11:29:59.266638", "status": "In progress"}
+{"id": 7, "products_amount": {"апельсин": 2, "банан": 2}, "date": "2025-12-19T11:29:59.266638", "status": "Done"}
+{"id": 8, "products_amount": {"банан": 4}, "date": "2025-12-19T11:31:56.433445", "status": "In progress"}
+{"id": 9, "products_amount": {"банан": 4}, "date": "2025-12-19T11:32:06.129210", "status": "In progress"}
+{"id": 10, "products_amount": {"банан": 3}, "date": "2025-12-19T11:32:20.767983", "status": "In progress"}
+{"id": 10, "products_amount": {"банан": 3}, "date": "2025-12-19T11:32:20.767983", "status": "Done"}

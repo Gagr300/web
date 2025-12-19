@@ -473,6 +473,51 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 
+@app.route('/sync_cart_state', methods=['POST'])
+def sync_cart_state():
+    """Синхронизация состояния корзины между клиентом и сервером"""
+    try:
+        data = request.get_json()
+        client_cart = data.get('cart', {})
+
+        if not isinstance(client_cart, dict):
+            return jsonify({'success': False, 'message': 'Некорректный формат корзины'}), 400
+
+        # Получаем текущую корзину из сессии
+        server_cart = session.get('cart', {})
+
+        # Синхронизируем: берем максимальные значения между клиентом и сервером
+        synchronized_cart = {}
+        all_product_names = set(list(client_cart.keys()) + list(server_cart.keys()))
+
+        for product_name in all_product_names:
+            client_qty = client_cart.get(product_name, 0)
+            server_qty = server_cart.get(product_name, 0)
+
+            # Берем максимальное значение для избежания потерь
+            synchronized_cart[product_name] = max(client_qty, server_qty)
+
+        # Валидируем синхронизированную корзину
+        validated_cart = {}
+        for product_name, quantity in synchronized_cart.items():
+            product = product_service.get_product(product_name)
+            if product and isinstance(quantity, int) and quantity > 0:
+                validated_cart[product_name] = min(quantity, product.number)
+
+        # Сохраняем валидированную корзину
+        session['cart'] = validated_cart
+        session.modified = True
+
+        return jsonify({
+            'success': True,
+            'message': 'Состояние корзины синхронизировано',
+            'cart': validated_cart,
+            'cart_total': sum(validated_cart.values())
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     # Создаем необходимые папки
     templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
