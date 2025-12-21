@@ -1,16 +1,17 @@
-{"name": "черника", "number": 10, "cost": 51, "emoji": "🫐", "color" :  [79,134,247]}
-{"name": "голубика", "number": 2, "cost": 53, "emoji": "🫐", "color" :  [70,65,150]}
-{"name": "малина", "number": 10, "cost": 51, "emoji": "🫐", "color" :  [176,1,73]}
-{"name": "вишня", "number": 20, "cost": 50, "emoji": "\uD83C\uDF52", "color" :  [207,2,52]}
-{"name": "клубника", "number": 10, "cost": 51, "emoji": "\uD83C\uDF53", "color" :  [251,41,67]}
-{"name": "яблоко", "number": 5, "cost": 50, "emoji": "🍎", "color" :  [227,16,72]}
-{"name": "арбуз", "number": 13, "cost": 66, "emoji": "🍉", "color" :  [253,70,89]}
-{"name": "апельсин", "number": 7, "cost": 55, "emoji": "🍊", "color" :  [253,143,57]}
-{"name": "персик", "number": 24, "cost": 80, "emoji": "🍑", "color" :  [244,121,131]}
-{"name": "морковь", "number": 67, "cost": 16, "emoji": "🥕", "color" :  [233,105,44]}
-{"name": "манго", "number": 13, "cost": 80, "emoji": "🥭", "color" :  [255,166,43]}
-{"name": "банан", "number": 6, "cost": 53, "emoji": "🍌", "color" :  [250,254,75]}
-{"name": "лимон", "number": 10, "cost": 45, "emoji": "🍋", "color" :  [253,233,16]}
-{"name": "груша", "number": 6, "cost": 45, "emoji": "🍐", "color" :  [255,254,197]}
-{"name": "киви", "number": 30, "cost": 56, "emoji": "\uD83E\uDD5D", "color" :  [142,229,63]}
-{"name": "молоко", "number": 20, "cost": 51, "emoji": "\uD83E\uDD5B", "color" :  [253,255,245]}
+{"name": "виноград", "number": 10, "cost": 51, "emoji": "🍇"}
+{"name": "голубика", "number": 2, "cost": 53, "emoji": "🫐"}
+{"name": "черника", "number": 10, "cost": 51, "emoji": "🫐"}
+{"name": "вишня", "number": 19, "cost": 50, "emoji": "🍒"}
+{"name": "яблоко", "number": 5, "cost": 50, "emoji": "🍎"}
+{"name": "клубника", "number": 10, "cost": 51, "emoji": "🍓"}
+{"name": "арбуз", "number": 13, "cost": 66, "emoji": "🍉"}
+{"name": "апельсин", "number": 6, "cost": 55, "emoji": "🍊"}
+{"name": "персик", "number": 24, "cost": 80, "emoji": "🍑"}
+{"name": "морковь", "number": 67, "cost": 16, "emoji": "🥕"}
+{"name": "манго", "number": 13, "cost": 80, "emoji": "🥭"}
+{"name": "ананас", "number": 5, "cost": 53, "emoji": "🍍"}
+{"name": "груша", "number": 6, "cost": 45, "emoji": "🍐"}
+{"name": "банан", "number": 6, "cost": 53, "emoji": "🍌"}
+{"name": "лимон", "number": 10, "cost": 45, "emoji": "🍋"}
+{"name": "киви", "number": 30, "cost": 56, "emoji": "🥝"}
+{"name": "молоко", "number": 20, "cost": 51, "emoji": "🥛"}

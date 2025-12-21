@@ -2,33 +2,191 @@
 
 {% block title %}Каталог продуктов - Магазинчик{% endblock %}
 
+{% block extra_css %}
+<style>
+    .product-card {
+        position: relative;
+        overflow: hidden;
+        border: none !important;
+    }
+
+    .product-color-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--product-color) 0%, var(--product-color-light) 100%);
+        opacity: 0.1;
+        z-index: 0;
+        border-radius: var(--radius-lg);
+    }
+
+    .product-emoji-wrapper {
+        position: relative;
+        z-index: 1;
+        display: inline-block;
+        padding: 15px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1rem;
+    }
+
+    .product-emoji {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 0;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    .product-name {
+        position: relative;
+        z-index: 1;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-price {
+        position: relative;
+        z-index: 1;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.3);
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+    }
+
+    .product-color-indicator {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+
+    .product-stock {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(5px);
+    }
+
+    .quantity-control {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: var(--radius-md);
+        padding: 0.25rem;
+        backdrop-filter: blur(5px);
+    }
+
+    .add-to-cart-btn {
+        position: relative;
+        z-index: 1;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        color: var(--text-color) !important;
+        font-weight: 600;
+        transition: all var(--transition-fast) !important;
+    }
+
+    .add-to-cart-btn:hover {
+        background: rgba(255, 255, 255, 0.4) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .add-to-cart-btn:disabled {
+        opacity: 0.5;
+        backdrop-filter: none;
+        background: rgba(128, 128, 128, 0.2) !important;
+    }
+
+    [data-theme="dark"] .product-color-background {
+        opacity: 0.15;
+    }
+
+    [data-theme="dark"] .product-emoji-wrapper {
+        background: rgba(0, 0, 0, 0.2);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    [data-theme="dark"] .product-stock,
+    [data-theme="dark"] .quantity-control {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] .add-to-cart-btn {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mb-8">
     <h2 class="text-3xl font-bold mb-2">Наши продукты</h2>
-    <p class="text-secondary">Выберите свежие фрукты и овощи для добавления в корзину</p>
+    <p class="text-secondary">Выберите продукты для добавления в Ваш напиток</p>
 </div>
 
 {% if products %}
 <div class="product-grid">
     {% for product in products %}
-    <div class="product-card">
-        <div class="product-emoji">{{ product.emoji }}</div>
+    <div class="product-card"
+         style="--product-color: {{ product.get_color_css() }};
+                --product-color-light: {{ product.get_light_color() }};">
+
+        <!-- Цветовой фон -->
+        <div class="product-color-background"></div>
+
+        <!-- Индикатор цвета -->
+        <div class="product-color-indicator"
+             style="background-color: {{ product.get_color_css() }};"></div>
+
+        <!-- Эмодзи -->
+        <div class="product-emoji-wrapper">
+            <div class="product-emoji">{{ product.emoji }}</div>
+        </div>
+
+        <!-- Название -->
         <h3 class="product-name">{{ product.name|capitalize }}</h3>
+
+        <!-- Цена -->
         <p class="product-price">{{ product.cost }} ₽</p>
 
+        <!-- Остаток на складе -->
         <p class="product-stock {% if product.number <= 5 %}low{% endif %}">
             {% if product.number > 10 %}
             <i class="fas fa-check-circle text-success"></i>
-            В наличии: {{ product.number }} шт.
+            В наличии: {{ product.number }} × 10 гр.
             {% elif product.number > 0 and product.number <= 10 %}
             <i class="fas fa-exclamation-triangle text-warning"></i>
-            Осталось мало: {{ product.number }} шт.
+            Осталось мало: {{ product.number }} × 10 гр.
             {% else %}
             <i class="fas fa-times-circle text-danger"></i>
             Нет в наличии
             {% endif %}
         </p>
 
+        <!-- Контроль количества -->
         <div class="quantity-control">
             <button class="quantity-btn minus" data-product-name="{{ product.name }}">
                 <i class="fas fa-minus"></i>
@@ -45,11 +203,12 @@
             </button>
         </div>
 
+        <!-- Кнопка добавления -->
         <button class="btn w-full mt-auto add-to-cart-btn"
                 data-product-name="{{ product.name }}"
                 {% if product.number <= 0 %}disabled{% endif %}>
             <i class="fas fa-cart-plus"></i>
-            Добавить в корзину
+            Добавить в напиток
         </button>
     </div>
     {% endfor %}

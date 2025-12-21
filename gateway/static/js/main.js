@@ -540,7 +540,7 @@ class CartManager {
         const cartIndicator = document.querySelector('.cart-indicator');
         if (cartIndicator) {
             if (total > 0) {
-                cartIndicator.innerHTML = '🛒';
+                cartIndicator.innerHTML = '🍹';
                 cartIndicator.classList.remove('empty');
 
                 // Анимация при добавлении товара
@@ -551,7 +551,7 @@ class CartManager {
                     }, 1000);
                 }
             } else {
-                cartIndicator.innerHTML = '🛒';
+                cartIndicator.innerHTML = '🍹';
                 cartIndicator.classList.add('empty');
             }
         }

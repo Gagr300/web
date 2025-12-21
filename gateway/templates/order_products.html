@@ -124,6 +124,44 @@
         50% { transform: translateY(-10px); }
     }
 
+    /* Новые стили для цветного отображения */
+    .product-color-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--product-color) 0%, var(--product-color-light) 100%);
+        opacity: 0.1;
+        z-index: 0;
+        border-radius: var(--radius-lg);
+    }
+
+    .cart-item-emoji-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 2rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1;
+    }
+
+    .cart-color-indicator {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
     @media (max-width: 768px) {
         .cart-item {
             padding: 1rem !important;
@@ -133,22 +171,28 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+
+        .cart-item-emoji-wrapper {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="mb-8">
-    <h2 class="text-3xl font-bold mb-2">🛒 Ваша корзина</h2>
+    <h2 class="text-3xl font-bold mb-2">🍹 Ваш напиток</h2>
     <p class="text-secondary">Управляйте количеством товаров и оформляйте заказ</p>
 </div>
 
 {% if not products %}
 <div class="text-center p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 shadow-xl cart-empty-state">
-    <div class="text-8xl mb-6">🛒</div>
+    <div class="text-8xl mb-6">🍹</div>
     <h3 class="text-2xl font-bold mb-3 text-gray-700 dark:text-gray-300">Корзина пуста</h3>
     <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
-        Добавьте свежие фрукты и овощи из нашего каталога, чтобы сделать заказ
+        Добавьте свежие фрукты и прочее из нашего каталога, чтобы сделать напиток
     </p>
     <a href="{{ url_for('product_list') }}" class="btn text-lg px-8 py-3 inline-flex items-center gap-2 hover:scale-105 transition-transform">
         <span>🛍️</span>
@@ -164,8 +208,8 @@
                 <tr class="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                     <th class="p-4 text-left rounded-tl-2xl">
                         <div class="flex items-center gap-2">
-                            <span>📦</span>
-                            <span>Товар</span>
+                            <span></span>
+                            <span>Добавка</span>
                         </div>
                     </th>
                     <th class="p-4 text-center">Цена</th>
@@ -176,16 +220,27 @@
             </thead>
             <tbody>
                 {% for product in products %}
+                {% set quantity = quantities.get(product.name, 0) %}
                 <tr class="cart-item border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                    data-product="{{ product.name }}">
+                    data-product="{{ product.name }}"
+                    style="--product-color: {{ product.get_color_css() }};
+                           --product-color-light: {{ product.get_light_color(0.3) }};">
+
                     <!-- Продукт -->
                     <td class="p-4">
                         <div class="flex items-center gap-4">
-                            <div class="text-4xl">{{ product.emoji }}</div>
+                            <div class="relative">
+                                <div class="cart-item-emoji-wrapper"
+                                     style="background: linear-gradient(135deg, {{ product.get_color_css() }} 0%, {{ product.get_light_color(0.5) }} 100%);">
+                                    {{ product.emoji }}
+                                </div>
+                                <div class="cart-color-indicator"
+                                     style="background-color: {{ product.get_color_css() }};"></div>
+                            </div>
                             <div>
                                 <h4 class="font-bold text-lg">{{ product.name|capitalize }}</h4>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    На складе: {{ product.available }} шт.
+                                    На складе: {{ product.number }} гр
                                 </p>
                             </div>
                         </div>
@@ -203,20 +258,20 @@
                         <div class="quantity-control-cart justify-center">
                             <button class="quantity-btn-cart decrease cart-decrease"
                                     data-product-name="{{ product.name }}"
-                                    {% if product.quantity <= 1 %}disabled{% endif %}>
+                                    {% if quantity <= 1 %}disabled{% endif %}>
                                 −
                             </button>
 
                             <input type="number"
                                    class="quantity-input-cart cart-quantity-input"
-                                   value="{{ product.quantity }}"
+                                   value="{{ quantity }}"
                                    min="1"
-                                   max="{{ product.available }}"
+                                   max="{{ product.number }}"
                                    data-product-name="{{ product.name }}">
 
                             <button class="quantity-btn-cart increase cart-increase"
                                     data-product-name="{{ product.name }}"
-                                    {% if product.quantity >= product.available %}disabled{% endif %}>
+                                    {% if quantity >= product.number %}disabled{% endif %}>
                                 +
                             </button>
                         </div>
@@ -224,8 +279,8 @@
 
                     <!-- Сумма -->
                     <td class="p-4 text-center">
-                        <div class="item-total text-xl font-bold text-green-600 dark:text-green-400">
-                            {{ product.total }} ₽
+                        <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            {{ product.cost * quantity }} ₽
                         </div>
                     </td>
 
@@ -293,6 +348,7 @@
      data-product-list-url="{{ url_for('product_list') }}"
      style="display: none;">
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -411,5 +467,4 @@
         });
     });
 </script>
-{% endblock %}
 {% endblock %}

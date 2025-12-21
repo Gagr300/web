@@ -23,7 +23,8 @@
     <div class="container">
         <header>
             <h1>🍓Магазинчик</h1>
-            <p>Свежие фрукты и овощи</p>
+            <p>Свежевыжатые соки и молочные коктейли</p>
+            <p>Выбери себе сам</p>
         </header>
 
         <nav>
@@ -51,9 +52,9 @@
                    class="cart-indicator {% if not session.get('cart') %}empty{% endif %} hover:scale-110 transition-transform"
                    title="{% if session.get('cart') %}Корзина{% else %}Корзина пуста{% endif %}">
                     {% if session.get('cart') %}
-                        🛒
+                        🍹
                     {% else %}
-                        🛒
+                        🍹
                     {% endif %}
                 </a>
             </div>

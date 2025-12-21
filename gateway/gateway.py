@@ -51,6 +51,7 @@ def inject_global_data():
 def product_list():
     """Главная страница со списком продуктов"""
     products = product_service.get_all_products()
+    # Теперь products уже являются объектами Product, так что можно просто передать их
     return render_template('product_list.html', products=products)
 
 
@@ -116,24 +117,20 @@ def view_cart():
     """Страница корзины"""
     cart = session.get('cart', {})
 
-    products_info = []
+    products = []  # Теперь храним объекты Product
+    quantities = {}  # Отдельно храним количество для каждого товара
     total_cost = 0
 
     for product_name, quantity in cart.items():
         product = product_service.get_product(product_name)
         if product:
-            products_info.append({
-                'name': product.name,
-                'quantity': quantity,
-                'cost': product.cost,
-                'total': product.cost * quantity,
-                'emoji': product.emoji,
-                'available': product.number
-            })
+            products.append(product)  # Сохраняем объект Product
+            quantities[product.name] = quantity  # Сохраняем количество
             total_cost += product.cost * quantity
 
     return render_template('order_products.html',
-                           products=products_info,
+                           products=products,  # Теперь это объекты Product
+                           quantities=quantities,  # Передаем количество отдельно
                            total_cost=total_cost,
                            cart=cart)
 
@@ -293,6 +290,7 @@ def clear_client_cart():
             })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/success')
 def success_page():
@@ -549,6 +547,7 @@ def sync_cart_state():
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
 
 if __name__ == '__main__':
     # Создаем необходимые папки

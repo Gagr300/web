@@ -90,4 +90,38 @@ class ProductService:
         return result
 
 
+    def _load_products(self):
+        """Загрузка продуктов из файла"""
+        if os.path.exists(self.data_file):
+            with open(self.data_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        product_data = json.loads(line.strip())
+                        self.products[product_data['name']] = Product(
+                            name=product_data['name'],
+                            number=product_data['number'],
+                            cost=product_data.get('cost', 0),
+                            emoji=product_data.get('emoji', ''),
+                            color=product_data.get('color', [255, 255, 255])
+                        )
+        else:
+            # Инициализация начальными данными
+            initial_products = [
+                {'name': 'яблоко', 'number': 30, 'cost': 50, 'emoji': '🍎', 'color': [227, 16, 72]},
+                {'name': 'банан', 'number': 65, 'cost': 150, 'emoji': '🍌', 'color': [250, 254, 75]},
+                {'name': 'апельсин', 'number': 10, 'cost': 155, 'emoji': '🍊', 'color': [253, 143, 57]}
+            ]
+
+            with open(self.data_file, 'w', encoding='utf-8') as f:
+                for product in initial_products:
+                    f.write(json.dumps(product, ensure_ascii=False) + '\n')
+                    self.products[product['name']] = Product(
+                        name=product['name'],
+                        number=product['number'],
+                        cost=product['cost'],
+                        emoji=product['emoji'],
+                        color=product['color']
+                    )
+
+
 product_service = ProductService()

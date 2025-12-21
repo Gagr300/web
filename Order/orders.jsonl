@@ -20,3 +20,5 @@
 {"id": 12, "products_amount": {"банан": 2}, "date": "2025-12-19T11:45:30.523586", "status": "Done"}
 {"id": 13, "products_amount": {"банан": 4}, "date": "2025-12-19T11:47:25.102624", "status": "In progress"}
 {"id": 13, "products_amount": {"банан": 4}, "date": "2025-12-19T11:47:25.102624", "status": "Done"}
+{"id": 14, "products_amount": {"ананас": 1, "апельсин": 1, "вишня": 1}, "date": "2025-12-21T11:53:20.828332", "status": "In progress"}
+{"id": 14, "products_amount": {"ананас": 1, "апельсин": 1, "вишня": 1}, "date": "2025-12-21T11:53:20.828332", "status": "Done"}
