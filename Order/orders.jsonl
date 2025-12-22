@@ -22,3 +22,5 @@
 {"id": 13, "products_amount": {"банан": 4}, "date": "2025-12-19T11:47:25.102624", "status": "Done"}
 {"id": 14, "products_amount": {"ананас": 1, "апельсин": 1, "вишня": 1}, "date": "2025-12-21T11:53:20.828332", "status": "In progress"}
 {"id": 14, "products_amount": {"ананас": 1, "апельсин": 1, "вишня": 1}, "date": "2025-12-21T11:53:20.828332", "status": "Done"}
+{"id": 15, "products_amount": {"киви": 4, "морковь": 3}, "date": "2025-12-23T00:08:22.293624", "status": "In progress"}
+{"id": 15, "products_amount": {"киви": 4, "морковь": 3}, "date": "2025-12-23T00:08:22.293624", "status": "Done"}

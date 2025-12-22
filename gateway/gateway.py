@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 import os
 import sys
+from Product.ColorUtils import ColorUtils
 
 app = Flask(__name__,
             template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
@@ -306,10 +307,62 @@ def success_page():
     order = order_service.get_order(int(order_id))
 
     if order:
-        return render_template('success.html', order_id=order_id)
+        # Обновляем success.html чтобы добавить кнопку смешивания
+        return render_template('success.html',
+                             order_id=order_id,
+                             blend_url=url_for('blend_page', order_id=order_id))
     else:
-        return render_template('success.html', order_id=f'#{order_id}')
+        return render_template('success.html',
+                             order_id=f'#{order_id}',
+                             blend_url=url_for('product_list'))
 
+
+@app.route('/blend')
+def blend_page():
+    """Страница смешивания после успешной оплаты"""
+    order_id = request.args.get('order_id')
+
+    if not order_id:
+        flash('Заказ не найден', 'error')
+        return redirect(url_for('product_list'))
+
+    # Получаем заказ
+    order = order_service.get_order(int(order_id))
+    if not order or order.status != 'Done':
+        flash('Заказ не найден или еще не оплачен', 'error')
+        return redirect(url_for('product_list'))
+
+    # Получаем продукты из заказа
+    ingredients = []
+    total_quantity = sum(order.products_amount.values())
+
+    for product_name, quantity in order.products_amount.items():
+        product = product_service.get_product(product_name)
+        if product:
+            # Рассчитываем процентное соотношение
+            percentage = round((quantity / total_quantity) * 100, 1) if total_quantity > 0 else 0
+
+            ingredients.append({
+                'name': product.name,
+                'quantity': quantity,
+                'emoji': product.emoji,
+                'color_css': product.get_color_css(),
+                'color_rgb': product.color if hasattr(product, 'color') else [255, 255, 255],
+                'percentage': percentage
+            })
+
+    # Вычисляем средний цвет
+    avg_color = ColorUtils.calculate_weighted_average_color(ingredients)
+    hex_color = ColorUtils.rgb_to_hex(avg_color['r'], avg_color['g'], avg_color['b'])
+    cocktail_name = ColorUtils.generate_cocktail_name(avg_color, ingredients)
+
+    # Передаем данные в шаблон
+    return render_template('blend_result.html',
+                           order_id=order_id,
+                           ingredients=sorted(ingredients, key=lambda x: x['quantity'], reverse=True),
+                           average_color=avg_color,
+                           hex_color=hex_color,
+                           cocktail_name=cocktail_name)
 
 @app.route('/clear_cart', methods=['POST'])
 def clear_cart():

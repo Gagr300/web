@@ -1,0 +1,553 @@
+{% extends "base.html" %}
+
+{% block title %}Результат смешивания - Магазинчик{% endblock %}
+
+{% block extra_css %}
+<style>
+    .blend-container {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .blender-animation {
+        position: relative;
+        width: 200px;
+        height: 300px;
+        margin: 2rem auto;
+        perspective: 1000px;
+    }
+
+    .blender-jar {
+        position: absolute;
+        width: 150px;
+        height: 200px;
+        background: linear-gradient(to bottom, #e0e0e0, #f0f0f0);
+        border-radius: 20px 20px 60px 60px;
+        border: 10px solid #d0d0d0;
+        overflow: hidden;
+        transform-style: preserve-3d;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .blender-lid {
+        position: absolute;
+        width: 170px;
+        height: 30px;
+        background: #c0c0c0;
+        border-radius: 10px;
+        top: -20px;
+        left: -10px;
+        z-index: 2;
+        border: 5px solid #b0b0b0;
+    }
+
+    .blender-button {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-radius: 50%;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        z-index: 3;
+    }
+
+    .blender-button:hover {
+        transform: translateX(-50%) scale(1.1);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .blender-button.blending {
+        animation: pulse 1s infinite;
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        50% { transform: translateX(-50%) scale(1.1); }
+    }
+
+    .blender-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 0%;
+        transition: height 1s ease;
+        border-radius: 20px 20px 50px 50px;
+        overflow: hidden;
+    }
+
+    .liquid-layer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 20%;
+        opacity: 0.8;
+        mix-blend-mode: multiply;
+    }
+
+    .result-color {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        margin: 2rem auto;
+        border: 5px solid rgba(255,255,255,0.5);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-color::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: conic-gradient(
+            from 0deg,
+            var(--color-1) 0%,
+            var(--color-2) 25%,
+            var(--color-3) 50%,
+            var(--color-4) 75%,
+            var(--color-1) 100%
+        );
+        animation: rotate 10s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .result-color::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        background: var(--result-color);
+        border-radius: 50%;
+        animation: pulse-color 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-color {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .blending .blender-jar {
+        animation: shake 0.5s infinite;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(2deg); }
+        75% { transform: rotate(-2deg); }
+    }
+
+    .ingredients-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+
+    .ingredient-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: var(--surface-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        min-width: 120px;
+    }
+
+    .ingredient-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-bottom: 0.5rem;
+        border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .color-details {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+    }
+
+    .color-value {
+        font-family: monospace;
+        background: var(--surface-color);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: bold;
+    }
+
+    .share-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .share-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-lg);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        transition: all var(--transition-fast);
+    }
+
+    .share-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .share-whatsapp {
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: white;
+    }
+
+    .share-telegram {
+        background: linear-gradient(135deg, #0088cc, #006699);
+        color: white;
+    }
+
+    .share-copy {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .success-animation {
+        animation: success-pop 0.5s ease-out;
+    }
+
+    @keyframes success-pop {
+        0% { transform: scale(0); opacity: 0; }
+        70% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .ingredient-percentage {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    .final-result {
+        margin-top: 3rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, var(--surface-color), color-mix(in srgb, var(--surface-color) 80%, transparent));
+        border-radius: var(--radius-xl);
+        animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="blend-container">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold mb-2">🎉 Ваш напиток готов!</h2>
+        <p class="text-secondary">Нажмите кнопку, чтобы смешать ингредиенты</p>
+    </div>
+
+    <!-- Список ингредиентов -->
+    <div class="ingredients-list">
+        {% for ingredient in ingredients %}
+        <div class="ingredient-item" style="--item-color: {{ ingredient.color_css }}">
+            <div class="ingredient-color" style="background-color: {{ ingredient.color_css }}"></div>
+            <div class="text-center">
+                <div class="font-bold">{{ ingredient.emoji }} {{ ingredient.name|capitalize }}</div>
+                <div class="ingredient-percentage">{{ ingredient.quantity }} × 10 гр. ({{ ingredient.percentage }}%)</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Анимация блендера -->
+    <div class="blender-animation" id="blenderAnimation">
+        <div class="blender-lid"></div>
+        <div class="blender-jar">
+            <div class="blender-content" id="blenderContent">
+                <!-- Слои жидкости будут добавлены через JavaScript -->
+            </div>
+        </div>
+        <div class="blender-button" id="blendButton" onclick="startBlending()">
+            🍹
+        </div>
+    </div>
+
+    <!-- Результат смешивания (изначально скрыт) -->
+    <div class="final-result" id="finalResult" style="display: none;">
+        <h3 class="text-2xl font-bold mb-4">🎨 Полученный цвет</h3>
+
+        <div class="result-color" id="resultColor"></div>
+
+        <div class="color-details">
+            <div>
+                <div class="text-secondary mb-2">RGB значение:</div>
+                <div class="color-value" id="rgbValue">rgb(255, 255, 255)</div>
+            </div>
+            <div>
+                <div class="text-secondary mb-2">HEX значение:</div>
+                <div class="color-value" id="hexValue">#FFFFFF</div>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <h4 class="text-xl font-bold mb-3">✨ Название вашего коктейля:</h4>
+            <div class="text-3xl font-bold text-gradient bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent" id="cocktailName">
+                Загрузка...
+            </div>
+        </div>
+
+        <!-- Кнопки поделиться -->
+        <div class="share-buttons">
+            <button class="share-btn share-whatsapp" onclick="shareOnWhatsApp()">
+                <i class="fab fa-whatsapp"></i> WhatsApp
+            </button>
+            <button class="share-btn share-telegram" onclick="shareOnTelegram()">
+                <i class="fab fa-telegram"></i> Telegram
+            </button>
+            <button class="share-btn share-copy" onclick="copyResult()">
+                <i class="fas fa-copy"></i> Копировать
+            </button>
+        </div>
+
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('product_list') }}" class="btn btn-success text-lg px-8 py-3">
+                <i class="fas fa-plus"></i> Создать новый напиток
+            </a>
+        </div>
+    </div>
+
+    <div id="notification" class="message" style="display: none; position: fixed; bottom: 20px; right: 20px;"></div>
+</div>
+
+<script>
+    // Данные ингредиентов из шаблона
+    const serverCalculatedColor = {{ average_color|tojson|safe }};
+    const serverHexColor = "{{ hex_color }}";
+    const serverCocktailName = "{{ cocktail_name }}";
+    const ingredients = {{ ingredients|tojson|safe }};
+    let isBlending = false;
+    let resultColor = null;
+
+    // Функция для вычисления среднего цвета
+    function calculateAverageColor() {
+        let totalWeight = 0;
+        let r = 0, g = 0, b = 0;
+
+        ingredients.forEach(ingredient => {
+            const weight = ingredient.quantity;
+            totalWeight += weight;
+
+            // Парсим цвет из RGB строки
+            const colorMatch = ingredient.color_css.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (colorMatch) {
+                r += parseInt(colorMatch[1]) * weight;
+                g += parseInt(colorMatch[2]) * weight;
+                b += parseInt(colorMatch[3]) * weight;
+            }
+        });
+
+        // Вычисляем среднее с учетом веса
+        r = Math.round(r / totalWeight);
+        g = Math.round(g / totalWeight);
+        b = Math.round(b / totalWeight);
+
+        return { r, g, b };
+    }
+
+    // Функция для преобразования RGB в HEX
+    function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    // Функция для генерации названия коктейля
+    function generateCocktailName(color) {
+        const names = [
+            "Тропический закат", "Морская свежесть", "Летний бриз", "Ягодный взрыв",
+            "Цитрусовый рай", "Кремовая мечта", "Фиолетовый туман", "Зеленый дракон",
+            "Розовое облако", "Золотой эликсир", "Лазурная волна", "Изумрудный оазис"
+        ];
+
+        // Выбираем название на основе цвета
+        const hue = Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180 / Math.PI;
+        const index = Math.abs(Math.floor(hue / 30)) % names.length;
+
+        return names[index];
+    }
+
+    // Функция для создания слоев жидкости в блендере
+    function createLiquidLayers() {
+        const blenderContent = document.getElementById('blenderContent');
+        blenderContent.innerHTML = '';
+
+        ingredients.forEach((ingredient, index) => {
+            const layer = document.createElement('div');
+            layer.className = 'liquid-layer';
+            layer.style.backgroundColor = ingredient.color_css;
+            layer.style.bottom = `${index * 20}%`;
+            blenderContent.appendChild(layer);
+        });
+    }
+
+    // Основная функция смешивания
+    function startBlending() {
+        if (isBlending) return;
+
+        isBlending = true;
+        const blendButton = document.getElementById('blendButton');
+        const blenderAnimation = document.getElementById('blenderAnimation');
+        const blenderContent = document.getElementById('blenderContent');
+
+        // Активируем анимацию
+        blendButton.classList.add('blending');
+        blenderAnimation.classList.add('blending');
+
+        // Заполняем блендер
+        blenderContent.style.height = '100%';
+        createLiquidLayers();
+
+        // Вычисляем результат
+        resultColor = calculateAverageColor();
+        const hexColor = rgbToHex(resultColor.r, resultColor.g, resultColor.b);
+        const cocktailName = generateCocktailName(resultColor);
+
+        // Ждем окончания анимации
+        setTimeout(() => {
+            // Останавливаем анимацию
+            blendButton.classList.remove('blending');
+            blenderAnimation.classList.remove('blending');
+
+            // Показываем результат
+            showResult(resultColor, hexColor, cocktailName);
+
+            isBlending = false;
+        }, 3000); // 3 секунды анимации
+    }
+
+    // Функция для отображения результата
+    function showResult(rgb, hex, name) {
+        const finalResult = document.getElementById('finalResult');
+        const resultColorElement = document.getElementById('resultColor');
+        const rgbValue = document.getElementById('rgbValue');
+        const hexValue = document.getElementById('hexValue');
+        const cocktailName = document.getElementById('cocktailName');
+
+        // Используем цвета с сервера
+        const finalRgb = serverCalculatedColor || rgb;
+        const finalHex = serverHexColor || hex;
+        const finalName = serverCocktailName || name;
+
+        // Устанавливаем цвета
+        resultColorElement.style.setProperty('--result-color', `rgb(${finalRgb.r}, ${finalRgb.g}, ${finalRgb.b})`);
+
+        // Устанавливаем значения
+        rgbValue.textContent = `rgb(${finalRgb.r}, ${finalRgb.g}, ${finalRgb.b})`;
+        hexValue.textContent = finalHex;
+        cocktailName.textContent = finalName;
+
+        // Добавляем отдельные цвета для градиента
+        ingredients.forEach((ingredient, index) => {
+            resultColorElement.style.setProperty(`--color-${index + 1}`, ingredient.color_css);
+        });
+
+        // Показываем результат с анимацией
+        finalResult.style.display = 'block';
+        finalResult.classList.add('success-animation');
+
+        // Сохраняем результат в localStorage для истории
+        saveToHistory(finalRgb, finalHex, finalName);
+    }
+
+    function saveToHistory(rgb, hex, name) {
+        try {
+            const history = JSON.parse(localStorage.getItem('cocktailHistory') || '[]');
+
+            history.push({
+                date: new Date().toISOString(),
+                color: { rgb: rgb, hex: hex },
+                name: name,
+                ingredients: ingredients.map(i => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    percentage: i.percentage
+                }))
+            });
+
+            // Сохраняем только последние 10 коктейлей
+            if (history.length > 10) {
+                history.shift();
+            }
+
+            localStorage.setItem('cocktailHistory', JSON.stringify(history));
+        } catch (e) {
+            console.error('Error saving to history:', e);
+        }
+    }
+    // Функции для шаринга
+    function shareOnWhatsApp() {
+        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    function shareOnTelegram() {
+        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
+        const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    function copyResult() {
+        const text = `Коктейль: ${document.getElementById('cocktailName').textContent}\nЦвет: ${document.getElementById('hexValue').textContent} (${document.getElementById('rgbValue').textContent})\nИнгредиенты:\n${ingredients.map(i => `  ${i.emoji} ${i.name} - ${i.quantity}×10гр`).join('\n')}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification('Результат скопирован в буфер обмена!', 'success');
+        }).catch(err => {
+            showNotification('Ошибка копирования', 'error');
+        });
+    }
+
+    // Утилитная функция для уведомлений
+    function showNotification(message, type) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `message ${type}`;
+        notification.style.display = 'block';
+
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        // Сразу создаем слои жидкости (прозрачные)
+        createLiquidLayers();
+    });
+</script>
+{% endblock %}
