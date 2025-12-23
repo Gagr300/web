@@ -581,7 +581,7 @@
         height: 40px;
         border-radius: 50%;
         border: 3px solid rgba(255,255,255,0.3);
-        background: var(--final-color) !important; /* Добавляем !important */
+        background: var(--final-color) !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
@@ -698,7 +698,7 @@
         margin-top: 0.25rem;
     }
 
-    /* Цветовая информация */
+    /* Цветовая информация - УПРОЩЕННАЯ ВЕРСИЯ */
     .color-properties {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -813,6 +813,10 @@
         .cocktail-name-display {
             font-size: 2rem;
         }
+
+        .color-properties {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 480px) {
@@ -838,7 +842,7 @@
             left: 20px;
             right: 20px;
             bottom: 20px;
-            background: var(--final-color) !important; /* Добавляем !important */
+            background: var(--final-color) !important;
             border-radius: 50%;
             z-index: 2;
             animation:
@@ -967,7 +971,7 @@
             {% endfor %}
         </div>
 
-        <!-- Детальная информация о цвете -->
+        <!-- Детальная информация о цвете - УПРОЩЕННАЯ -->
         <div class="color-properties">
             <div class="property-card">
                 <div class="property-title">Название цвета</div>
@@ -978,26 +982,6 @@
                 <div class="property-title">RGB значение</div>
                 <div class="property-value" id="rgbValue">rgb(255, 255, 255)</div>
             </div>
-
-            <div class="property-card">
-                <div class="property-title">HEX значение</div>
-                <div class="property-value" id="hexValue">#FFFFFF</div>
-            </div>
-
-            <div class="property-card">
-                <div class="property-title">HSL значение</div>
-                <div class="property-value" id="hslValue">hsl(0, 0%, 100%)</div>
-            </div>
-
-            <div class="property-card">
-                <div class="property-title">Прозрачность</div>
-                <div class="property-value" id="alphaValue">100%</div>
-            </div>
-
-            <div class="property-card">
-                <div class="property-title">Яркость</div>
-                <div class="property-value" id="brightnessValue">100%</div>
-            </div>
         </div>
 
         <!-- Название коктейля -->
@@ -1006,8 +990,6 @@
             <div class="cocktail-name-display text-3xl md:text-4xl font-bold mb-6"
                  id="cocktailName">Загрузка...</div>
         </div>
-
-
 
         <div class="mt-8 text-center">
             <a href="{{ url_for('product_list') }}" class="btn btn-success text-lg px-8 py-3">
@@ -1286,10 +1268,6 @@
         const colorHex = document.getElementById('colorHex');
         const cocktailName = document.getElementById('cocktailName');
         const rgbValue = document.getElementById('rgbValue');
-        const hexValue = document.getElementById('hexValue');
-        const hslValue = document.getElementById('hslValue');
-        const alphaValue = document.getElementById('alphaValue');
-        const brightnessValue = document.getElementById('brightnessValue');
         const colorName = document.getElementById('colorName');
         const colorSparkles = document.getElementById('colorSparkles');
 
@@ -1297,59 +1275,55 @@
         const finalColor = serverCalculatedColor || calculateWeightedColor();
         const finalHex = serverHexColor || rgbToHex(finalColor.r, finalColor.g, finalColor.b);
         const finalName = serverCocktailName || generateCocktailName(finalColor);
-        const hsl = rgbToHsl(finalColor.r, finalColor.g, finalColor.b);
 
         const finalColorCss = finalColor.a !== undefined
             ? `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`
             : `rgb(${finalColor.r}, ${finalColor.g}, ${finalColor.b})`;
 
         // Устанавливаем CSS переменные
-    document.documentElement.style.setProperty('--final-color', finalColorCss);
+        document.documentElement.style.setProperty('--final-color', finalColorCss);
 
-    // Обновляем круг - задаем фон напрямую
-    const circleBefore = document.querySelector('.result-circle::before');
-    if (circleBefore) {
-        circleBefore.style.setProperty('background', finalColorCss, 'important');
-    }
-
-    // Обновляем образец цвета
-    if (colorSample) {
-        colorSample.style.backgroundColor = finalColorCss;
-        colorSample.style.background = finalColorCss; // Добавляем для надежности
-        colorSample.style.boxShadow = `0 0 20px ${finalHex}, 0 0 40px ${finalHex}80`;
-    }
-
-    // Обновляем значение HEX
-    if (colorHex) {
-        colorHex.textContent = finalHex;
-    }
-
-    // Принудительно применяем стили
-    document.documentElement.style.cssText += `--final-color: ${finalColorCss} !important;`;
-
-    // Применяем стили к элементам напрямую
-    const circleBeforeElement = document.createElement('style');
-    circleBeforeElement.textContent = `
-        .result-circle::before {
-            background: ${finalColorCss} !important;
-            box-shadow:
-                inset 0 0 30px rgba(255,255,255,0.3),
-                0 0 60px ${finalColorCss},
-                0 0 100px ${finalColorCss} !important;
+        // Обновляем круг - задаем фон напрямую
+        const circleBefore = document.querySelector('.result-circle::before');
+        if (circleBefore) {
+            circleBefore.style.setProperty('background', finalColorCss, 'important');
         }
 
-        .color-sample {
-            background: ${finalColorCss} !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2),
-                        0 0 20px ${finalHex} !important;
+        // Обновляем образец цвета
+        if (colorSample) {
+            colorSample.style.backgroundColor = finalColorCss;
+            colorSample.style.background = finalColorCss; // Добавляем для надежности
+            colorSample.style.boxShadow = `0 0 20px ${finalHex}, 0 0 40px ${finalHex}80`;
         }
-    `;
-    document.head.appendChild(circleBeforeElement);
+
+        // Обновляем значение HEX
+        if (colorHex) {
+            colorHex.textContent = finalHex;
+        }
+
+        // Принудительно применяем стили
+        document.documentElement.style.cssText += `--final-color: ${finalColorCss} !important;`;
+
+        // Применяем стили к элементам напрямую
+        const circleBeforeElement = document.createElement('style');
+        circleBeforeElement.textContent = `
+            .result-circle::before {
+                background: ${finalColorCss} !important;
+                box-shadow:
+                    inset 0 0 30px rgba(255,255,255,0.3),
+                    0 0 60px ${finalColorCss},
+                    0 0 100px ${finalColorCss} !important;
+            }
+
+            .color-sample {
+                background: ${finalColorCss} !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2),
+                            0 0 20px ${finalHex} !important;
+            }
+        `;
+        document.head.appendChild(circleBeforeElement);
 
         colorSample.style.backgroundColor = `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`;
-
-        // Вычисляем яркость
-        const brightness = Math.round(((finalColor.r * 299 + finalColor.g * 587 + finalColor.b * 114) / 1000) / 255 * 100);
 
         // Генерируем более светлый вариант для свечения
         const glowColor = `rgba(
@@ -1381,10 +1355,6 @@
         colorHex.textContent = finalHex;
         cocktailName.textContent = finalName;
         rgbValue.textContent = `rgb(${finalColor.r}, ${finalColor.g}, ${finalColor.b})`;
-        hexValue.textContent = finalHex;
-        hslValue.textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
-        alphaValue.textContent = `${Math.round(finalColor.a * 100)}%`;
-        brightnessValue.textContent = `${brightness}%`;
         colorName.textContent = getColorName(finalColor);
 
         // Обновляем проценты ингредиентов
@@ -1398,7 +1368,7 @@
         finalResult.classList.add('success-animation');
 
         // Сохраняем в историю
-        saveToHistory(finalColor, finalHex, finalName, hsl);
+        saveToHistory(finalColor, finalHex, finalName);
     }
 
     // Обновить процентное соотношение ингредиентов
@@ -1513,12 +1483,12 @@
         return names[index];
     }
 
-    function saveToHistory(rgb, hex, name, hsl) {
+    function saveToHistory(rgb, hex, name) {
         try {
             const history = JSON.parse(localStorage.getItem('cocktailHistory') || '[]');
             history.push({
                 date: new Date().toISOString(),
-                color: { rgb, hex, hsl },
+                color: { rgb, hex },
                 name: name,
                 ingredients: ingredients.map(i => ({
                     name: i.name,
@@ -1536,19 +1506,19 @@
 
     // Функции для шаринга
     async function shareOnWhatsApp() {
-        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
+        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('colorHex').textContent}`;
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
     }
 
     async function shareOnTelegram() {
-        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
+        const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('colorHex').textContent}`;
         const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
     }
 
     async function copyResult() {
-        const text = `Коктейль: ${document.getElementById('cocktailName').textContent}\nЦвет: ${document.getElementById('hexValue').textContent}\nRGB: ${document.getElementById('rgbValue').textContent}\nHSL: ${document.getElementById('hslValue').textContent}`;
+        const text = `Коктейль: ${document.getElementById('cocktailName').textContent}\nЦвет: ${document.getElementById('colorHex').textContent}\nRGB: ${document.getElementById('rgbValue').textContent}`;
 
         try {
             await navigator.clipboard.writeText(text);
