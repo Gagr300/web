@@ -2,7 +2,10 @@ class CartManager {
     constructor() {
         this.syncInProgress = false;
         this.pendingSync = null;
+        this.inputTimeout = null;
+        this.buttonClickTimeout = null;
         this.init();
+        console.log('CartManager initialized');
     }
 
     init() {
@@ -16,14 +19,16 @@ class CartManager {
 
     // Обновить итоговую сумму на странице корзины
     updateCartTotal(total) {
+        console.log('Updating cart total to:', total);
+        
         // Обновляем основной элемент с суммой
         const totalElement = document.getElementById('cart-total-amount');
         if (totalElement) {
-            const currentTotal = parseInt(totalElement.textContent.replace('₽', '').replace(/\s/g, '')) || 0;
+            const currentTotal = parseFloat(totalElement.textContent.replace('₽', '').replace(/\s/g, '').replace(',', '.')) || 0;
             totalElement.textContent = `${total} ₽`;
 
             // Анимация изменения суммы
-            if (total !== currentTotal) {
+            if (parseFloat(total) !== currentTotal) {
                 totalElement.classList.add('updated');
                 setTimeout(() => {
                     totalElement.classList.remove('updated');
@@ -172,86 +177,71 @@ class CartManager {
 
     async updateCartItem(productName, quantity) {
         if (quantity < 0) return;
+        
         try {
-                const response = await fetch('/update_cart_item', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
-                });
+            const response = await fetch('/update_cart_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
+            });
 
-                const data = await response.json();
+            const data = await response.json();
 
-                if (data.success) {
-                    // Обновляем локальное хранилище
-                    const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
+            if (data.success) {
+                // Обновляем локальное хранилище
+                const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
 
-                    if (quantity === 0) {
-                        delete currentCart[productName];
-                    } else {
-                        currentCart[productName] = quantity;
-                    }
-
-                    localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
-                    window.cartData = currentCart;
-
-                    // Обновляем UI если на странице корзины
-                    if (window.location.pathname.includes('/cart')) {
-                        if (quantity === 0) {
-                            this.removeCartItemFromUI(productName);
-                        } else {
-                            this.updateCartItemInUI(productName, quantity, data);
-                        }
-
-                        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Обновляем итоговую сумму
-                        this.updateCartTotal(data.total_cost);
-                        this.updateCartItemCount(data.cart_total);
-
-                        // Если корзина пуста, перезагружаем страницу
-                        if (Object.keys(currentCart).length === 0) {
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 500);
-                        }
-                    }
-
-                    // Обновляем индикатор
-                    this.updateCartIndicator(data.cart_total);
-
-                    // Добавляем уведомление
-                    this.showNotification('Корзина обновлена', 'success');
-
-                    return data;
+                if (quantity === 0) {
+                    delete currentCart[productName];
+                } else {
+                    currentCart[productName] = quantity;
                 }
-            } catch (error) {
-                console.error('Failed to update cart item:', error);
-                this.showNotification('Ошибка при обновлении количества', 'error');
+
+                localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
+                window.cartData = currentCart;
+
+                // Обновляем UI если на странице корзины
+                if (window.location.pathname.includes('/cart')) {
+                    if (quantity === 0) {
+                        this.removeCartItemFromUI(productName);
+                    } else {
+                        this.updateCartItemInUI(productName, quantity, data);
+                    }
+
+                    // ВАЖНО: Обновляем итоговую сумму
+                    if (data.total_cost !== undefined) {
+                        this.updateCartTotal(data.total_cost);
+                    }
+                    
+                    // Обновляем количество позиций
+                    this.updateItemCount(data.cart_total || this.sumCartItems(currentCart));
+
+                    // Если корзина пуста, перезагружаем страницу
+                    if (Object.keys(currentCart).length === 0) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                }
+
+                // Обновляем индикатор
+                this.updateCartIndicator(data.cart_total || this.sumCartItems(currentCart));
+
+                // Добавляем уведомление
+                this.showNotification('Корзина обновлена', 'success');
+
+                return data;
             }
+        } catch (error) {
+            console.error('Failed to update cart item:', error);
+            this.showNotification('Ошибка при обновлении количества', 'error');
         }
+    }
 
-    updateCartItemCount(totalItems) {
-        // Обновляем количество в индикаторе корзины
-        this.updateCartIndicator(totalItems);
-
-        // Если есть элемент с отображением общего количества товаров
-        const totalCountElement = document.getElementById('cart-total-count');
-        if (totalCountElement) {
-            totalCountElement.textContent = totalItems;
-        }
-
-        // Обновляем в навигации если есть
-        const cartIndicator = document.querySelector('.cart-indicator');
-        if (cartIndicator && totalItems > 0) {
-            // Добавляем счетчик если его нет
-            if (!cartIndicator.querySelector('.count')) {
-                const countElement = document.createElement('div');
-                countElement.className = 'count absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center';
-                cartIndicator.appendChild(countElement);
-            }
-            const countElement = cartIndicator.querySelector('.count');
-            countElement.textContent = totalItems > 9 ? '9+' : totalItems;
-        }
+    sumCartItems(cart) {
+        return Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
     }
 
     removeCartItemFromUI(productName) {
@@ -277,14 +267,28 @@ class CartManager {
             }
 
             // Обновляем сумму для конкретного товара
-            const itemData = data.items.find(item => item.name === productName);
-            if (itemData) {
-                const totalCell = row.querySelector('.item-total');
-                if (totalCell) {
-                    totalCell.textContent = `${itemData.total} ₽`;
-                    totalCell.classList.add('updated');
-                    setTimeout(() => totalCell.classList.remove('updated'), 500);
+            let itemTotal = 0;
+            if (data.items && Array.isArray(data.items)) {
+                const itemData = data.items.find(item => item.name === productName);
+                if (itemData) {
+                    itemTotal = itemData.total;
                 }
+            }
+            
+            // Если не нашли в items, вычисляем
+            if (itemTotal === 0) {
+                const priceElement = row.querySelector('.item-price');
+                if (priceElement) {
+                    const price = parseInt(priceElement.textContent.replace('₽', '').replace(/\s/g, '')) || 0;
+                    itemTotal = price * quantity;
+                }
+            }
+
+            const totalCell = row.querySelector('.item-total');
+            if (totalCell) {
+                totalCell.textContent = `${itemTotal} ₽`;
+                totalCell.classList.add('updated');
+                setTimeout(() => totalCell.classList.remove('updated'), 500);
             }
 
             // Обновляем состояние кнопок
@@ -357,43 +361,86 @@ class CartManager {
     }
 
     setupEventListeners() {
-        // Обработка кликов по кнопкам добавления в корзину
+        // Единый обработчик всех кликов
         document.addEventListener('click', (e) => {
-            // Добавление в корзину со страницы продуктов
-            if (e.target.matches('.add-to-cart-btn') || e.target.closest('.add-to-cart-btn')) {
-                const button = e.target.matches('.add-to-cart-btn') ? e.target : e.target.closest('.add-to-cart-btn');
-                this.addToCartFromButton(button);
+            const target = e.target;
+            
+            // 1. Кнопки + и - на странице продуктов (главная страница)
+            if (target.classList.contains('quantity-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isPlus = target.classList.contains('plus') || target.textContent.includes('+');
+                const isMinus = target.classList.contains('minus') || target.textContent.includes('-');
+                
+                if (isPlus || isMinus) {
+                    // Находим соответствующий input
+                    let input;
+                    if (isPlus) {
+                        input = target.previousElementSibling;
+                    } else {
+                        input = target.nextElementSibling;
+                    }
+                    
+                    if (input && input.classList.contains('quantity-input')) {
+                        const productName = input.id.replace('quantity-', '');
+                        this.handleQuantityButtonClick(productName, isPlus ? 1 : -1, input);
+                    }
+                }
+                return;
             }
-
-            // Удаление из корзины
-            if (e.target.matches('.remove-from-cart') || e.target.closest('.remove-from-cart')) {
-                const button = e.target.matches('.remove-from-cart') ? e.target : e.target.closest('.remove-from-cart');
+            
+            // 2. Кнопки добавления в корзину на главной странице
+            if (target.classList.contains('add-to-cart-btn') || target.closest('.add-to-cart-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const button = target.classList.contains('add-to-cart-btn') ? target : target.closest('.add-to-cart-btn');
+                this.addToCartFromButton(button);
+                return;
+            }
+            
+            // 3. Кнопки + в корзине
+            if (target.classList.contains('cart-increase') || target.closest('.cart-increase')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const button = target.classList.contains('cart-increase') ? target : target.closest('.cart-increase');
+                const productName = button.dataset.productName;
+                this.handleCartIncrease(productName, button);
+                return;
+            }
+            
+            // 4. Кнопки - в корзине
+            if (target.classList.contains('cart-decrease') || target.closest('.cart-decrease')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const button = target.classList.contains('cart-decrease') ? target : target.closest('.cart-decrease');
+                const productName = button.dataset.productName;
+                this.handleCartDecrease(productName, button);
+                return;
+            }
+            
+            // 5. Кнопки удаления из корзины
+            if (target.classList.contains('remove-from-cart') || target.closest('.remove-from-cart')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const button = target.classList.contains('remove-from-cart') ? target : target.closest('.remove-from-cart');
                 const productName = button.dataset.productName;
                 this.removeFromCart(productName);
+                return;
             }
-
-            // Очистка корзины
-            if (e.target.matches('.clear-cart-btn') || e.target.closest('.clear-cart-btn')) {
+            
+            // 6. Кнопка очистки корзины
+            if (target.classList.contains('clear-cart-btn') || target.closest('.clear-cart-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
                 this.clearCart();
-            }
-
-            // Кнопки увеличения/уменьшения в корзине
-            if (e.target.matches('.cart-increase') || e.target.closest('.cart-increase')) {
-                const button = e.target.matches('.cart-increase') ? e.target : e.target.closest('.cart-increase');
-                const productName = button.dataset.productName;
-                this.updateCartQuantity(productName, 1);
-            }
-
-            if (e.target.matches('.cart-decrease') || e.target.closest('.cart-decrease')) {
-                const button = e.target.matches('.cart-decrease') ? e.target : e.target.closest('.cart-decrease');
-                const productName = button.dataset.productName;
-                this.updateCartQuantity(productName, -1);
+                return;
             }
         });
 
-        // Обработка изменений количества через input в корзине
+        // Обработка изменений через input в корзине
         document.addEventListener('input', (e) => {
-            if (e.target.matches('.cart-quantity-input')) {
+            if (e.target.classList.contains('cart-quantity-input')) {
                 const productName = e.target.dataset.productName;
                 const quantity = parseInt(e.target.value) || 0;
 
@@ -405,93 +452,103 @@ class CartManager {
             }
         });
 
-        // Обработка кнопок в корзине
-        document.addEventListener('click', (e) => {
-            // Кнопки увеличения/уменьшения в корзине
-            if (e.target.matches('.cart-increase') || e.target.closest('.cart-increase')) {
-                const button = e.target.matches('.cart-increase') ? e.target : e.target.closest('.cart-increase');
-                const productName = button.dataset.productName;
-                this.updateCartQuantity(productName, 1);
-            }
+        // Обработка изменений через input на главной странице
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('quantity-input')) {
+                const input = e.target;
+                const max = parseInt(input.max) || 100;
+                const min = parseInt(input.min) || 1;
+                let value = parseInt(input.value) || min;
 
-            if (e.target.matches('.cart-decrease') || e.target.closest('.cart-decrease')) {
-                const button = e.target.matches('.cart-decrease') ? e.target : e.target.closest('.cart-decrease');
-                const productName = button.dataset.productName;
-                this.updateCartQuantity(productName, -1);
-            }
+                if (value > max) {
+                    value = max;
+                    this.showNotification(`Максимальное количество: ${max}`, 'warning');
+                } else if (value < min) {
+                    value = min;
+                }
 
-            // Удаление из корзины
-            if (e.target.matches('.remove-from-cart') || e.target.closest('.remove-from-cart')) {
-                const button = e.target.matches('.remove-from-cart') ? e.target : e.target.closest('.remove-from-cart');
-                const productName = button.dataset.productName;
-                this.removeFromCart(productName);
+                if (value !== parseInt(input.value)) {
+                    input.value = value;
+                }
             }
         });
-
-        // Сохранение корзины при уходе со страницы
-        window.addEventListener('beforeunload', () => {
-            this.saveCartToStorage();
-        });
-
-        // Инициализация кнопок количества на странице продуктов
-        this.initProductPageControls();
     }
 
-    initProductPageControls() {
-    // Кнопки + и - на странице продуктов
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('.quantity-btn.plus') || e.target.closest('.quantity-btn.plus')) {
-            const button = e.target.matches('.quantity-btn.plus') ? e.target : e.target.closest('.quantity-btn.plus');
-            const input = button.previousElementSibling;
-            if (input && input.type === 'number' && !input.disabled) {
-                const max = parseInt(input.max) || 100;
-                const currentValue = parseInt(input.value) || 1;
-                if (currentValue < max) {
-                    input.value = currentValue + 1;
-                    // Генерируем событие change для обновления UI
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
+    // Обработка кнопок +/- на главной странице
+    handleQuantityButtonClick(productName, change, input) {
+        const max = parseInt(input.max) || 100;
+        const min = parseInt(input.min) || 1;
+        let currentValue = parseInt(input.value) || min;
+        const newValue = Math.max(min, Math.min(max, currentValue + change));
+
+        if (newValue !== currentValue) {
+            input.value = newValue;
+            
+            // Анимация кнопки
+            const button = change > 0 ? input.nextElementSibling : input.previousElementSibling;
+            if (button) {
+                button.classList.add('animate-press');
+                setTimeout(() => button.classList.remove('animate-press'), 300);
+            }
+            
+            // Обновляем UI
+            const event = new Event('change', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+    }
+
+    // Обработка кнопки + в корзине
+    handleCartIncrease(productName, button) {
+        const input = document.querySelector(`input[data-product-name="${productName}"]`);
+        if (!input) return;
+
+        const max = parseInt(input.max) || 100;
+        let currentValue = parseInt(input.value) || 0;
+        const newValue = Math.max(1, Math.min(max, currentValue + 1));
+
+        if (newValue !== currentValue) {
+            this.updateCartItemDirect(productName, newValue, button);
+        }
+    }
+
+    // Обработка кнопки - в корзине
+    handleCartDecrease(productName, button) {
+        const input = document.querySelector(`input[data-product-name="${productName}"]`);
+        if (!input) return;
+
+        const min = parseInt(input.min) || 1;
+        let currentValue = parseInt(input.value) || 0;
+        const newValue = Math.max(min, currentValue - 1);
+
+        if (newValue !== currentValue) {
+            this.updateCartItemDirect(productName, newValue, button);
+        }
+    }
+
+    // Прямое обновление товара в корзине
+    async updateCartItemDirect(productName, quantity, button) {
+        // Анимация кнопки
+        button.classList.add('animate-press');
+        setTimeout(() => button.classList.remove('animate-press'), 300);
+
+        // Временно показываем обновленную сумму
+        this.updateItemPricePreview(productName, quantity);
+
+        // Обновляем через API
+        try {
+            const data = await this.updateCartItem(productName, quantity);
+            
+            if (data && data.success) {
+                // Обновляем итоговую сумму
+                if (data.total_cost !== undefined) {
+                    this.updateCartTotal(data.total_cost);
                 }
             }
-            e.stopPropagation(); // Предотвращаем дальнейшую обработку
+        } catch (error) {
+            console.error('Error updating cart item:', error);
+            this.showNotification('Ошибка при обновлении', 'error');
         }
-
-        if (e.target.matches('.quantity-btn.minus') || e.target.closest('.quantity-btn.minus')) {
-            const button = e.target.matches('.quantity-btn.minus') ? e.target : e.target.closest('.quantity-btn.minus');
-            const input = button.nextElementSibling;
-            if (input && input.type === 'number' && !input.disabled) {
-                const min = parseInt(input.min) || 1;
-                const currentValue = parseInt(input.value) || 1;
-                if (currentValue > min) {
-                    input.value = currentValue - 1;
-                    // Генерируем событие change для обновления UI
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-            e.stopPropagation(); // Предотвращаем дальнейшую обработку
-        }
-    });
-
-    // Обработка прямого ввода в поле количества
-    document.addEventListener('change', (e) => {
-        if (e.target.matches('.quantity-input')) {
-            const input = e.target;
-            const max = parseInt(input.max) || 100;
-            const min = parseInt(input.min) || 1;
-            let value = parseInt(input.value) || min;
-
-            if (value > max) {
-                value = max;
-                this.showNotification(`Максимальное количество: ${max}`, 'warning');
-            } else if (value < min) {
-                value = min;
-            }
-
-            if (value !== parseInt(input.value)) {
-                input.value = value;
-            }
-        }
-    });
-}
+    }
 
     async addToCartFromButton(button) {
         const productName = button.dataset.productName;
@@ -567,79 +624,6 @@ class CartManager {
         }
     }
 
-    updateCartQuantity(productName, change) {
-        const input = document.querySelector(`input[data-product-name="${productName}"]`);
-        if (!input) return;
-
-        let currentValue = parseInt(input.value) || 0;
-        const max = parseInt(input.max) || 100;
-        const newValue = Math.max(1, Math.min(max, currentValue + change));
-
-        if (newValue !== currentValue) {
-            input.value = newValue;
-
-            // Анимация кнопки
-            const button = event.target.closest('.quantity-btn-cart');
-            if (button) {
-                button.classList.add('animate-press');
-                setTimeout(() => button.classList.remove('animate-press'), 300);
-            }
-
-            // Немедленное обновление через API
-            this.updateCartItem(productName, newValue);
-        }
-    }
-
-    async removeFromCart(productName) {
-        const response = await this.updateCartItem(productName, 0);
-
-        // Анимация удаления
-        const row = document.querySelector(`[data-product="${productName}"]`);
-        if (row) {
-            row.style.transform = 'translateX(100%)';
-            row.style.opacity = '0';
-            setTimeout(() => {
-                if (row.parentNode) {
-                    row.parentNode.removeChild(row);
-                }
-
-                // Обновляем итоговую сумму если она есть в ответе
-                if (response && response.total_cost !== undefined) {
-                    this.updateCartTotal(response.total_cost);
-                }
-
-                // Проверяем, пуста ли теперь корзина
-                const remainingRows = document.querySelectorAll('[data-product]');
-                if (remainingRows.length === 0) {
-                    // Показываем сообщение о пустой корзине
-                    const emptyCartMessage = `
-                        <div class="text-center p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 shadow-xl">
-                            <div class="text-8xl mb-6">🍹</div>
-                            <h3 class="text-2xl font-bold mb-3 text-gray-700 dark:text-gray-300">Корзина пуста</h3>
-                            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                                Добавьте свежие фрукты и прочее из нашего каталога, чтобы сделать напиток
-                            </p>
-                            <a href="${document.getElementById('urls-data')?.dataset?.productListUrl || '/'}"
-                               class="btn text-lg px-8 py-3 inline-flex items-center gap-2 hover:scale-105 transition-transform">
-                                <span>🛍️</span>
-                                Перейти в каталог
-                            </a>
-                        </div>
-                    `;
-
-                    // Заменяем таблицу на сообщение о пустой корзине
-                    const cartContainer = document.querySelector('.cart-items') || document.querySelector('table');
-                    if (cartContainer && cartContainer.parentNode) {
-                        const parent = cartContainer.parentNode;
-                        parent.innerHTML = emptyCartMessage;
-                    }
-                }
-            }, 300);
-        }
-
-        this.showNotification(`${productName} удален из корзины`, 'success');
-    }
-
     updateCartIndicator(total) {
         const cartIndicator = document.querySelector('.cart-indicator');
         if (cartIndicator) {
@@ -658,15 +642,6 @@ class CartManager {
                 cartIndicator.innerHTML = '🍹';
                 cartIndicator.classList.add('empty');
             }
-        }
-    }
-
-        updateCartTotal(total) {
-        const totalElement = document.getElementById('cart-total-amount');
-        if (totalElement) {
-            totalElement.textContent = `${total} ₽`;
-            totalElement.classList.add('updated');
-            setTimeout(() => totalElement.classList.remove('updated'), 500);
         }
     }
 
@@ -707,6 +682,33 @@ class CartManager {
                 }
             }, 300);
         }, 3000);
+    }
+
+    // Предпросмотр цены при изменении количества
+    updateItemPricePreview(productName, quantity) {
+        const row = document.querySelector(`[data-product="${productName}"]`);
+        if (row) {
+            const priceElement = row.querySelector('.item-price');
+            const totalElement = row.querySelector('.item-total');
+            
+            if (priceElement && totalElement) {
+                const price = parseInt(priceElement.textContent.replace('₽', '').replace(/\s/g, '')) || 0;
+                const newTotal = price * quantity;
+                
+                // Временно показываем новую сумму
+                totalElement.textContent = `${newTotal} ₽`;
+                totalElement.style.color = '#10b981';
+                totalElement.style.fontWeight = 'bold';
+                
+                // Через секунду возвращаем нормальный вид
+                setTimeout(() => {
+                    if (totalElement.textContent === `${newTotal} ₽`) {
+                        totalElement.style.color = '';
+                        totalElement.style.fontWeight = '';
+                    }
+                }, 300);
+            }
+        }
     }
 }
 
@@ -778,14 +780,14 @@ document.addEventListener('DOMContentLoaded', function() {
             animation: press 0.3s ease;
         }
 
-        .updated {
-            animation: pulse 0.5s ease;
+        @keyframes price-update {
+            0% { transform: scale(1); color: inherit; }
+            50% { transform: scale(1.1); color: #10b981; }
+            100% { transform: scale(1); color: inherit; }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .updated {
+            animation: price-update 0.5s ease;
         }
 
         .loader {
@@ -840,3 +842,12 @@ if (!Element.prototype.closest) {
         return null;
     };
 }
+
+// Для отладки - логируем все клики по кнопкам
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('cart-increase') || 
+        e.target.classList.contains('cart-decrease') ||
+        e.target.classList.contains('quantity-btn')) {
+        console.log('Button clicked:', e.target.className, e.target);
+    }
+}, true);

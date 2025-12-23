@@ -439,7 +439,7 @@ def update_cart_item():
         session['cart'] = cart
         session.modified = True
 
-        # Пересчитываем общую стоимость
+        # Пересчитываем общую стоимость и детали по товарам
         total_cost = 0
         items_details = []
         for name, qty in cart.items():
@@ -451,17 +451,18 @@ def update_cart_item():
                     'name': name,
                     'quantity': qty,
                     'cost': prod.cost,
-                    'total': item_cost
+                    'total': item_cost,
+                    'emoji': prod.emoji
                 })
 
         return jsonify({
             'success': True,
-            'cart_total': sum(cart.values()),
-            'total_cost': total_cost,
-            'item_total': item_total,
-            'remaining_stock': product.number,
-            'items': items_details,
-            'cart': cart  # Возвращаем обновленную корзину
+            'cart_total': sum(cart.values()),  # Общее количество товаров
+            'total_cost': total_cost,           # Общая сумма
+            'item_total': item_total,           # Сумма для измененного товара
+            'remaining_stock': product.number,  # Остаток на складе
+            'items': items_details,             # Детали по всем товарам
+            'cart': cart                        # Обновленная корзина
         })
 
     except ValueError:
@@ -513,6 +514,26 @@ def sync_cart():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
+@app.route('/api/cart/total', methods=['GET'])
+def get_cart_total():
+    """Получить только общую сумму корзины"""
+    try:
+        cart = session.get('cart', {})
+        total = 0
+
+        for product_name, quantity in cart.items():
+            product = product_service.get_product(product_name)
+            if product:
+                total += product.cost * quantity
+
+        return jsonify({
+            'success': True,
+            'total': total,
+            'count': sum(cart.values())
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/cart')
 def get_cart_api():
