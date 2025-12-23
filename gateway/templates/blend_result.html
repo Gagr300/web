@@ -7,161 +7,290 @@
     .blend-container {
         text-align: center;
         padding: 2rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
 
-    .blender-animation {
+    /* Анимация блендера */
+    .blender-scene {
         position: relative;
-        width: 200px;
-        height: 300px;
+        width: 300px;
+        height: 400px;
         margin: 2rem auto;
         perspective: 1000px;
     }
 
-    .blender-jar {
+    .blender-body {
         position: absolute;
-        width: 150px;
-        height: 200px;
-        background: linear-gradient(to bottom, #e0e0e0, #f0f0f0);
+        width: 200px;
+        height: 300px;
+        background: linear-gradient(145deg, #d0d0d0, #f0f0f0);
         border-radius: 20px 20px 60px 60px;
-        border: 10px solid #d0d0d0;
+        border: 15px solid #b0b0b0;
         overflow: hidden;
         transform-style: preserve-3d;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        box-shadow:
+            0 20px 40px rgba(0,0,0,0.3),
+            inset 0 -10px 20px rgba(0,0,0,0.1),
+            inset 0 10px 20px rgba(255,255,255,0.5);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+    }
+
+    .blender-body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(to bottom, #e8e8e8, #c0c0c0);
+        border-radius: 10px 10px 0 0;
+        z-index: 3;
+    }
+
+    .blender-glass {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        background: linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+        border-radius: 10px 10px 40px 40px;
+        overflow: hidden;
+        z-index: 1;
+        border: 3px solid rgba(255,255,255,0.2);
     }
 
     .blender-lid {
         position: absolute;
-        width: 170px;
-        height: 30px;
-        background: #c0c0c0;
-        border-radius: 10px;
+        width: 220px;
+        height: 40px;
+        background: linear-gradient(to bottom, #a0a0a0, #c0c0c0);
+        border-radius: 15px;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 4;
+        border: 5px solid #909090;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .blender-lid::after {
+        content: '';
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: #808080;
+        border-radius: 50%;
         top: -20px;
-        left: -10px;
-        z-index: 2;
-        border: 5px solid #b0b0b0;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid #707070;
     }
 
     .blender-button {
         position: absolute;
-        width: 50px;
-        height: 50px;
+        width: 80px;
+        height: 80px;
         background: linear-gradient(135deg, #ef4444, #dc2626);
         border-radius: 50%;
-        bottom: -25px;
+        bottom: -40px;
         left: 50%;
         transform: translateX(-50%);
         cursor: pointer;
         transition: all 0.3s;
-        border: 5px solid white;
-        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
-        z-index: 3;
+        border: 8px solid white;
+        box-shadow:
+            0 10px 25px rgba(239, 68, 68, 0.4),
+            inset 0 5px 10px rgba(255,255,255,0.3),
+            inset 0 -5px 10px rgba(0,0,0,0.2);
+        z-index: 5;
+        animation: button-glow 2s infinite alternate;
+    }
+
+    @keyframes button-glow {
+        0% { box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); }
+        100% { box-shadow: 0 10px 35px rgba(239, 68, 68, 0.8); }
     }
 
     .blender-button:hover {
         transform: translateX(-50%) scale(1.1);
-        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        background: linear-gradient(135deg, #dc2626, #ef4444);
     }
 
     .blender-button.blending {
-        animation: pulse 1s infinite;
+        animation: blend-pulse 0.5s infinite, button-glow 2s infinite alternate;
         background: linear-gradient(135deg, #10b981, #059669);
     }
 
-    @keyframes pulse {
+    @keyframes blend-pulse {
         0%, 100% { transform: translateX(-50%) scale(1); }
-        50% { transform: translateX(-50%) scale(1.1); }
+        50% { transform: translateX(-50%) scale(1.05); }
     }
 
-    .blender-content {
+    /* Контейнер для жидкости */
+    .liquid-container {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 0%;
-        transition: height 1s ease;
-        border-radius: 20px 20px 50px 50px;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
         overflow: hidden;
+        border-radius: 10px 10px 40px 40px;
+        z-index: 0;
     }
 
     .liquid-layer {
         position: absolute;
         left: 0;
         right: 0;
-        height: 20%;
-        opacity: 0.8;
-        mix-blend-mode: multiply;
+        height: 100%;
+        opacity: 0;
+        transform: translateY(100%);
+        transition: transform 1s ease-out, opacity 1s ease-out;
+        border-radius: 10px 10px 40px 40px;
     }
 
-    .result-color {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        margin: 2rem auto;
-        border: 5px solid rgba(255,255,255,0.5);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        position: relative;
-        overflow: hidden;
+    /* Анимации блендера */
+    .blending .blender-body {
+        animation: blender-shake 0.2s infinite;
     }
 
-    .result-color::before {
-        content: '';
+    .blending .blender-glass {
+        animation: glass-vibrate 0.15s infinite;
+    }
+
+    @keyframes blender-shake {
+        0%, 100% { transform: translateX(-50%) rotate(0deg); }
+        25% { transform: translateX(-50%) rotate(1.5deg); }
+        75% { transform: translateX(-50%) rotate(-1.5deg); }
+    }
+
+    @keyframes glass-vibrate {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+
+    /* Анимация частиц */
+    .particles-container {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: conic-gradient(
-            from 0deg,
-            var(--color-1) 0%,
-            var(--color-2) 25%,
-            var(--color-3) 50%,
-            var(--color-4) 75%,
-            var(--color-1) 100%
-        );
-        animation: rotate 10s linear infinite;
+        pointer-events: none;
+        z-index: 6;
+        opacity: 0;
     }
 
-    @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    .result-color::after {
-        content: '';
+    .particle {
         position: absolute;
-        top: 10px;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        background: var(--result-color);
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        animation: pulse-color 3s ease-in-out infinite;
+        pointer-events: none;
+        filter: blur(1px);
     }
 
-    @keyframes pulse-color {
+    @keyframes particle-spray {
+        0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 0;
+        }
+    }
+
+    /* Прогресс бар */
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: var(--border-color);
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 2rem 0;
+        display: none;
+        max-width: 500px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg,
+            {% for ingredient in ingredients %}
+            {{ ingredient.color_css }} {{ loop.index0 * 100/(ingredients|length) }}%,
+            {{ ingredient.color_css }} {{ loop.index * 100/(ingredients|length) }}%
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        );
+        width: 0%;
+        transition: width 3s ease-out;
+        border-radius: 5px;
+    }
+
+    /* Этапы */
+    .stage-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        opacity: 0;
+        animation: fadeIn 0.5s 0.5s forwards;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .stage {
+        text-align: center;
+        flex: 1;
+        position: relative;
+        padding: 0 0.5rem;
+    }
+
+    .stage::before {
+        content: '○';
+        display: block;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+    }
+
+    .stage.active::before {
+        content: '●';
+        color: var(--primary-color);
+        animation: stage-pulse 1s infinite;
+    }
+
+    @keyframes stage-pulse {
         0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
+        50% { transform: scale(1.2); }
     }
 
-    .blending .blender-jar {
-        animation: shake 0.5s infinite;
+    .stage.completed::before {
+        content: '✓';
+        color: var(--success-color);
+        animation: none;
     }
 
-    @keyframes shake {
-        0%, 100% { transform: rotate(0deg); }
-        25% { transform: rotate(2deg); }
-        75% { transform: rotate(-2deg); }
-    }
-
-    .ingredients-list {
+    /* Ингредиенты */
+    .ingredients-visual {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
         margin: 2rem 0;
+        opacity: 0;
+        animation: fadeIn 0.5s 0.3s forwards;
+        max-width: 800px;
     }
 
-    .ingredient-item {
+    .ingredient-visual-item {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -170,69 +299,474 @@
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow-md);
         min-width: 120px;
+        transform: translateY(20px);
+        animation: float-up 0.5s ease-out forwards;
+        animation-delay: calc(var(--index) * 0.1s);
     }
 
-    .ingredient-color {
-        width: 30px;
-        height: 30px;
+    @keyframes float-up {
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .ingredient-color-preview {
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         margin-bottom: 0.5rem;
-        border: 2px solid rgba(255,255,255,0.5);
+        border: 3px solid rgba(255,255,255,0.5);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
     }
 
-    .color-details {
+    .ingredient-color-preview::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: conic-gradient(
+            from 0deg,
+            currentColor,
+            transparent 50%,
+            currentColor 100%
+        );
+        animation: color-spin 3s linear infinite;
+    }
+
+    @keyframes color-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Вихрь */
+    .vortex-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 150px;
+        height: 150px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 7;
+    }
+
+    .vortex {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 0deg,
+            transparent,
+            rgba(255,255,255,0.8),
+            transparent
+        );
+        animation: vortex-spin 1s linear infinite;
+        filter: blur(10px);
+    }
+
+    @keyframes vortex-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Пузырьки */
+    .bubble {
+        position: absolute;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        animation: bubble-rise 3s ease-in infinite;
+    }
+
+    @keyframes bubble-rise {
+        0% {
+            transform: translateY(100px) scale(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px) scale(1.5);
+            opacity: 0;
+        }
+    }
+
+    /* Улучшенная визуализация результата */
+    .result-visualization {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 3rem 0;
+    }
+
+    .color-display-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        margin: 2rem auto;
+    }
+
+    .result-circle {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 0deg,
+            {% for ingredient in ingredients %}
+            {{ ingredient.color_css }} {{ loop.index0 * 100/(ingredients|length) }}%,
+            {{ ingredient.color_css }} {{ loop.index * 100/(ingredients|length) }}%
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        );
+        box-shadow:
+            0 0 60px rgba(0,0,0,0.2),
+            inset 0 0 40px rgba(255,255,255,0.1);
+        animation: rotate-slow 20s linear infinite;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    @keyframes rotate-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .result-circle::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        background: var(--final-color);
+        border-radius: 50%;
+        z-index: 2;
+        animation:
+            pulse-result 3s ease-in-out infinite,
+            glow-result 4s ease-in-out infinite alternate;
+        box-shadow:
+            inset 0 0 30px rgba(255,255,255,0.3),
+            0 0 60px var(--final-color),
+            0 0 100px var(--final-color-glow);
+        border: 8px solid rgba(255,255,255,0.2);
+    }
+
+    @keyframes pulse-result {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.3),
+                0 0 60px var(--final-color),
+                0 0 100px var(--final-color-glow);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow:
+                inset 0 0 40px rgba(255,255,255,0.4),
+                0 0 80px var(--final-color),
+                0 0 140px var(--final-color-glow);
+        }
+    }
+
+    @keyframes glow-result {
+        0% {
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.3),
+                0 0 60px var(--final-color),
+                0 0 100px var(--final-color);
+        }
+        100% {
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.3),
+                0 0 80px var(--final-color),
+                0 0 150px var(--final-color);
+        }
+    }
+
+    .result-circle::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+            circle at 30% 30%,
+            rgba(255,255,255,0.8) 0%,
+            transparent 70%
+        );
+        border-radius: 50%;
+        z-index: 3;
+        mix-blend-mode: overlay;
+        animation: shimmer-effect 8s linear infinite;
+    }
+
+    @keyframes shimmer-effect {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .color-sparkles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 4;
+        pointer-events: none;
+    }
+
+    .sparkle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+        filter: blur(1px);
+        animation: sparkle-twinkle 2s ease-in-out infinite;
+        opacity: 0;
+    }
+
+    @keyframes sparkle-twinkle {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(0) rotate(0deg);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.5) rotate(180deg);
+        }
+    }
+
+    .color-info-badge {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface-color);
+        padding: 1rem 2rem;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        z-index: 10;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        animation: badge-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s both;
+    }
+
+    @keyframes badge-pop {
+        0% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px) scale(0.8);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+    }
+
+    .color-sample {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.3);
+        background: var(--final-color) !important; /* Добавляем !important */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .color-hex {
+        font-family: 'Courier New', monospace;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--text-color);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Волны внутри круга */
+    .color-waves {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        overflow: hidden;
+        z-index: 2;
+    }
+
+    .wave {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+            circle,
+            transparent 30%,
+            var(--final-color) 70%
+        );
+        transform: translate(-50%, -50%);
+        opacity: 0.3;
+        animation: wave-expand 3s ease-out infinite;
+    }
+
+    @keyframes wave-expand {
+        0% {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0;
+        }
+    }
+
+    .wave:nth-child(2) { animation-delay: 1s; }
+    .wave:nth-child(3) { animation-delay: 2s; }
+
+    /* Результат */
+    .final-result {
+        margin-top: 3rem;
+        padding: 2rem;
+        background: linear-gradient(135deg,
+            var(--surface-color),
+            color-mix(in srgb, var(--surface-color) 80%, transparent));
+        border-radius: var(--radius-xl);
+        animation: fadeIn 1s ease-out;
+        display: none;
+        width: 100%;
+        max-width: 800px;
+    }
+
+    /* Разбивка по ингредиентам */
+    .color-breakdown {
         display: flex;
         justify-content: center;
-        align-items: center;
-        gap: 2rem;
-        margin: 2rem 0;
+        gap: 1rem;
+        margin: 3rem 0;
         flex-wrap: wrap;
     }
 
-    .color-value {
-        font-family: monospace;
-        background: var(--surface-color);
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-weight: bold;
-    }
-
-    .share-buttons {
+    .breakdown-item {
         display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 2rem;
-    }
-
-    .share-btn {
-        padding: 0.75rem 1.5rem;
-        border-radius: var(--radius-lg);
-        border: none;
-        cursor: pointer;
-        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        transition: all var(--transition-fast);
+        padding: 1rem;
+        background: var(--surface-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        min-width: 100px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .share-btn:hover {
-        transform: translateY(-2px);
+    .breakdown-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: var(--item-color);
     }
 
-    .share-whatsapp {
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: white;
+    .breakdown-emoji {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
     }
 
-    .share-telegram {
-        background: linear-gradient(135deg, #0088cc, #006699);
-        color: white;
+    .breakdown-percentage {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--text-color);
     }
 
-    .share-copy {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
+    .breakdown-name {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    /* Цветовая информация */
+    .color-properties {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+        width: 100%;
+    }
+
+    .property-card {
+        background: var(--surface-color);
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--final-color);
+    }
+
+    .property-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .property-title {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .property-value {
+        font-family: 'Courier New', monospace;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--text-color);
+    }
+
+    /* Название коктейля */
+    .cocktail-name-display {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg,
+            var(--color-1),
+            var(--color-2),
+            var(--color-3));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        animation: name-glow 3s infinite alternate;
+    }
+
+    @keyframes name-glow {
+        0% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+
+    /* Секция шаринга */
+    .share-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+    }
+
+    /* Анимации */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .success-animation {
@@ -240,28 +774,96 @@
     }
 
     @keyframes success-pop {
-        0% { transform: scale(0); opacity: 0; }
-        70% { transform: scale(1.1); opacity: 1; }
+        0% { transform: scale(0.9); opacity: 0; }
         100% { transform: scale(1); opacity: 1; }
     }
 
-    .ingredient-percentage {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-top: 0.25rem;
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .blender-scene {
+            width: 250px;
+            height: 350px;
+        }
+
+        .blender-body {
+            width: 180px;
+            height: 270px;
+        }
+
+        .color-display-container {
+            width: 250px;
+            height: 250px;
+        }
+
+        .color-info-badge {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            bottom: -40px;
+        }
+
+        .stage-indicator {
+            font-size: 0.9rem;
+        }
+
+        .stage::before {
+            font-size: 1.5rem;
+        }
+
+        .cocktail-name-display {
+            font-size: 2rem;
+        }
     }
 
-    .final-result {
-        margin-top: 3rem;
-        padding: 2rem;
-        background: linear-gradient(135deg, var(--surface-color), color-mix(in srgb, var(--surface-color) 80%, transparent));
-        border-radius: var(--radius-xl);
-        animation: fadeIn 1s ease-out;
-    }
+    @media (max-width: 480px) {
+        .blender-scene {
+            width: 200px;
+            height: 300px;
+        }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        .blender-body {
+            width: 150px;
+            height: 220px;
+        }
+
+        .color-display-container {
+            width: 200px;
+            height: 200px;
+        }
+
+        .result-circle::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: var(--final-color) !important; /* Добавляем !important */
+            border-radius: 50%;
+            z-index: 2;
+            animation:
+                pulse-result 3s ease-in-out infinite,
+                glow-result 4s ease-in-out infinite alternate;
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.3),
+                0 0 60px var(--final-color),
+                0 0 100px var(--final-color);
+            border: 8px solid rgba(255,255,255,0.2);
+        }
+
+        .ingredients-visual {
+            gap: 0.5rem;
+        }
+
+        .ingredient-visual-item {
+            min-width: 90px;
+            padding: 0.75rem;
+        }
+
+        .breakdown-item {
+            min-width: 80px;
+            padding: 0.75rem;
+        }
     }
 </style>
 {% endblock %}
@@ -269,124 +871,636 @@
 {% block content %}
 <div class="blend-container">
     <div class="mb-8">
-        <h2 class="text-3xl font-bold mb-2">🎉 Ваш напиток готов!</h2>
-        <p class="text-secondary">Нажмите кнопку, чтобы смешать ингредиенты</p>
+        <h2 class="text-3xl font-bold mb-2">🎨 Создание вашего напитка</h2>
+        <p class="text-secondary">Нажмите кнопку смешивания, чтобы увидеть магию</p>
     </div>
 
-    <!-- Список ингредиентов -->
-    <div class="ingredients-list">
+    <!-- Индикатор этапов -->
+    <div class="stage-indicator">
+        <div class="stage" id="stage1">Подготовка</div>
+        <div class="stage" id="stage2">Смешивание</div>
+        <div class="stage" id="stage3">Взбивание</div>
+        <div class="stage" id="stage4">Готово!</div>
+    </div>
+
+    <!-- Прогресс бар -->
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Визуализация ингредиентов -->
+    <div class="ingredients-visual" id="ingredientsVisual">
         {% for ingredient in ingredients %}
-        <div class="ingredient-item" style="--item-color: {{ ingredient.color_css }}">
-            <div class="ingredient-color" style="background-color: {{ ingredient.color_css }}"></div>
+        <div class="ingredient-visual-item" style="--index: {{ loop.index }}; animation-delay: {{ loop.index * 0.1 }}s;">
+            <div class="ingredient-color-preview" style="color: {{ ingredient.color_css }}; background-color: {{ ingredient.color_css }};"></div>
             <div class="text-center">
                 <div class="font-bold">{{ ingredient.emoji }} {{ ingredient.name|capitalize }}</div>
-                <div class="ingredient-percentage">{{ ingredient.quantity }} × 10 гр. ({{ ingredient.percentage }}%)</div>
+                <div class="text-sm text-secondary">{{ ingredient.quantity }} × 10 гр.</div>
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Анимация блендера -->
-    <div class="blender-animation" id="blenderAnimation">
-        <div class="blender-lid"></div>
-        <div class="blender-jar">
-            <div class="blender-content" id="blenderContent">
-                <!-- Слои жидкости будут добавлены через JavaScript -->
+    <!-- Сцена блендера -->
+    <div class="blender-scene" id="blenderScene">
+        <!-- Видимый блендер -->
+        <div class="blender-body" id="blenderBody">
+            <div class="blender-glass">
+                <div class="liquid-container" id="liquidContainer">
+                    <!-- Слои жидкости будут добавлены через JS -->
+                </div>
             </div>
         </div>
+
+        <div class="blender-lid"></div>
         <div class="blender-button" id="blendButton" onclick="startBlending()">
             🍹
         </div>
+
+        <!-- Контейнер для частиц -->
+        <div class="particles-container" id="particlesContainer"></div>
+
+        <!-- Вид сверху (внутри крышки) -->
+        <div class="vortex-container" id="vortexContainer">
+            <div class="vortex"></div>
+        </div>
     </div>
 
-    <!-- Результат смешивания (изначально скрыт) -->
-    <div class="final-result" id="finalResult" style="display: none;">
-        <h3 class="text-2xl font-bold mb-4">🎨 Полученный цвет</h3>
+    <!-- Результат смешивания -->
+    <div class="final-result" id="finalResult">
+        <h3 class="text-2xl font-bold mb-6 text-center">✨ Ваш уникальный напиток готов!</h3>
 
-        <div class="result-color" id="resultColor"></div>
+        <!-- Визуализация цвета -->
+        <div class="result-visualization">
+            <div class="color-display-container">
+                <!-- Основной круг с градиентом -->
+                <div class="result-circle" id="resultCircle"></div>
 
-        <div class="color-details">
-            <div>
-                <div class="text-secondary mb-2">RGB значение:</div>
-                <div class="color-value" id="rgbValue">rgb(255, 255, 255)</div>
+                <!-- Волны внутри -->
+                <div class="color-waves" id="colorWaves">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+
+                <!-- Спарклы -->
+                <div class="color-sparkles" id="colorSparkles"></div>
             </div>
-            <div>
-                <div class="text-secondary mb-2">HEX значение:</div>
-                <div class="color-value" id="hexValue">#FFFFFF</div>
+
+            <!-- Информация о цвете -->
+            <div class="color-info-badge">
+                <div class="color-sample" id="colorSample"></div>
+                <div class="color-hex" id="colorHex">#FFFFFF</div>
             </div>
         </div>
 
-        <div class="mt-6">
-            <h4 class="text-xl font-bold mb-3">✨ Название вашего коктейля:</h4>
-            <div class="text-3xl font-bold text-gradient bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent" id="cocktailName">
-                Загрузка...
+        <!-- Разбивка по ингредиентам -->
+        <div class="color-breakdown" id="colorBreakdown">
+            {% for ingredient in ingredients %}
+            <div class="breakdown-item"
+                 style="--item-color: {{ ingredient.color_css }};">
+                <div class="breakdown-emoji">{{ ingredient.emoji }}</div>
+                <div class="breakdown-percentage"
+                     id="percentage-{{ ingredient.name }}">0%</div>
+                <div class="breakdown-name">{{ ingredient.name|capitalize }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Детальная информация о цвете -->
+        <div class="color-properties">
+            <div class="property-card">
+                <div class="property-title">Название цвета</div>
+                <div class="property-value" id="colorName">—</div>
+            </div>
+
+            <div class="property-card">
+                <div class="property-title">RGB значение</div>
+                <div class="property-value" id="rgbValue">rgb(255, 255, 255)</div>
+            </div>
+
+            <div class="property-card">
+                <div class="property-title">HEX значение</div>
+                <div class="property-value" id="hexValue">#FFFFFF</div>
+            </div>
+
+            <div class="property-card">
+                <div class="property-title">HSL значение</div>
+                <div class="property-value" id="hslValue">hsl(0, 0%, 100%)</div>
+            </div>
+
+            <div class="property-card">
+                <div class="property-title">Прозрачность</div>
+                <div class="property-value" id="alphaValue">100%</div>
+            </div>
+
+            <div class="property-card">
+                <div class="property-title">Яркость</div>
+                <div class="property-value" id="brightnessValue">100%</div>
             </div>
         </div>
 
-        <!-- Кнопки поделиться -->
-        <div class="share-buttons">
-            <button class="share-btn share-whatsapp" onclick="shareOnWhatsApp()">
-                <i class="fab fa-whatsapp"></i> WhatsApp
-            </button>
-            <button class="share-btn share-telegram" onclick="shareOnTelegram()">
-                <i class="fab fa-telegram"></i> Telegram
-            </button>
-            <button class="share-btn share-copy" onclick="copyResult()">
-                <i class="fas fa-copy"></i> Копировать
-            </button>
+        <!-- Название коктейля -->
+        <div class="mt-8 text-center">
+            <h4 class="text-xl font-bold mb-3">🎨 Название вашего коктейля:</h4>
+            <div class="cocktail-name-display text-3xl md:text-4xl font-bold mb-6"
+                 id="cocktailName">Загрузка...</div>
         </div>
+
+
 
         <div class="mt-8 text-center">
             <a href="{{ url_for('product_list') }}" class="btn btn-success text-lg px-8 py-3">
-                <i class="fas fa-plus"></i> Создать новый напиток
+                <i class="fas fa-plus"></i> Заказать новый напиток
             </a>
         </div>
     </div>
 
-    <div id="notification" class="message" style="display: none; position: fixed; bottom: 20px; right: 20px;"></div>
+    <div id="notification" class="message" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000;"></div>
 </div>
 
 <script>
     // Данные ингредиентов из шаблона
+    const ingredients = {{ ingredients|tojson|safe }};
     const serverCalculatedColor = {{ average_color|tojson|safe }};
     const serverHexColor = "{{ hex_color }}";
     const serverCocktailName = "{{ cocktail_name }}";
-    const ingredients = {{ ingredients|tojson|safe }};
-    let isBlending = false;
-    let resultColor = null;
 
-    // Функция для вычисления среднего цвета
-    function calculateAverageColor() {
+    let isBlending = false;
+    let particles = [];
+    let bubbles = [];
+
+    // Функция для вычисления среднего цвета с весом
+    function calculateWeightedColor() {
         let totalWeight = 0;
-        let r = 0, g = 0, b = 0;
+        let totalR = 0, totalG = 0, totalB = 0;
+        let totalAlpha = 0;
 
         ingredients.forEach(ingredient => {
             const weight = ingredient.quantity;
             totalWeight += weight;
 
-            // Парсим цвет из RGB строки
-            const colorMatch = ingredient.color_css.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            const colorMatch = ingredient.color_css.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
             if (colorMatch) {
-                r += parseInt(colorMatch[1]) * weight;
-                g += parseInt(colorMatch[2]) * weight;
-                b += parseInt(colorMatch[3]) * weight;
+                const r = parseInt(colorMatch[1]);
+                const g = parseInt(colorMatch[2]);
+                const b = parseInt(colorMatch[3]);
+                const alpha = colorMatch[4] ? parseFloat(colorMatch[4]) : 1;
+
+                totalR += r * weight;
+                totalG += g * weight;
+                totalB += b * weight;
+                totalAlpha += alpha * weight;
             }
         });
 
-        // Вычисляем среднее с учетом веса
-        r = Math.round(r / totalWeight);
-        g = Math.round(g / totalWeight);
-        b = Math.round(b / totalWeight);
+        const avgR = Math.round(totalR / totalWeight);
+        const avgG = Math.round(totalG / totalWeight);
+        const avgB = Math.round(totalB / totalWeight);
+        const avgAlpha = totalAlpha / totalWeight;
 
-        return { r, g, b };
+        return {
+            r: Math.max(0, Math.min(255, avgR)),
+            g: Math.max(0, Math.min(255, avgG)),
+            b: Math.max(0, Math.min(255, avgB)),
+            a: Math.max(0, Math.min(1, avgAlpha))
+        };
     }
 
-    // Функция для преобразования RGB в HEX
+    // Преобразование RGB в HSL
+    function rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            l: Math.round(l * 100)
+        };
+    }
+
+    // Создание градиента из ингредиентов
+    function createIngredientGradient() {
+        const gradientStops = ingredients.map((ingredient, index) => {
+            const percentage = (index / (ingredients.length - 1)) * 100;
+            return `${ingredient.color_css} ${percentage}%`;
+        }).join(', ');
+
+        return `linear-gradient(90deg, ${gradientStops})`;
+    }
+
+    // Создание слоев жидкости с анимацией
+    function createLiquidLayers() {
+        const container = document.getElementById('liquidContainer');
+        container.innerHTML = '';
+
+        let accumulatedHeight = 0;
+
+        ingredients.forEach((ingredient, index) => {
+            const layer = document.createElement('div');
+            layer.className = 'liquid-layer';
+            layer.style.backgroundColor = ingredient.color_css;
+            layer.style.height = `${(ingredient.quantity / getTotalQuantity()) * 100}%`;
+            layer.style.bottom = `${accumulatedHeight}%`;
+            layer.style.zIndex = ingredients.length - index;
+
+            // Задержка для последовательной анимации
+            layer.style.transitionDelay = `${index * 0.2}s`;
+
+            container.appendChild(layer);
+            accumulatedHeight += (ingredient.quantity / getTotalQuantity()) * 100;
+        });
+
+        // Анимация заполнения
+        setTimeout(() => {
+            const layers = container.querySelectorAll('.liquid-layer');
+            layers.forEach(layer => {
+                layer.style.transform = 'translateY(0)';
+                layer.style.opacity = '0.8';
+            });
+        }, 100);
+    }
+
+    function getTotalQuantity() {
+        return ingredients.reduce((sum, ing) => sum + ing.quantity, 0);
+    }
+
+    // Создание пузырьков
+    function createBubbles() {
+        const container = document.getElementById('liquidContainer');
+        for (let i = 0; i < 30; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = `${Math.random() * 100}%`;
+            bubble.style.width = `${Math.random() * 10 + 5}px`;
+            bubble.style.height = bubble.style.width;
+            bubble.style.animationDelay = `${Math.random() * 2}s`;
+            bubble.style.opacity = Math.random() * 0.5 + 0.3;
+            container.appendChild(bubble);
+            bubbles.push(bubble);
+        }
+    }
+
+    // Создание частиц для анимации смешивания
+    function createParticles() {
+        const container = document.getElementById('particlesContainer');
+        container.innerHTML = '';
+        particles = [];
+
+        for (let i = 0; i < 100; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            // Выбираем случайный цвет из ингредиентов
+            const ingredient = ingredients[Math.floor(Math.random() * ingredients.length)];
+            particle.style.backgroundColor = ingredient.color_css;
+
+            // Случайная позиция
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+
+            // Случайный размер
+            const size = Math.random() * 6 + 3;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+
+            // Случайная анимация
+            const tx = (Math.random() - 0.5) * 200;
+            const ty = (Math.random() - 0.5) * 200;
+            particle.style.setProperty('--tx', `${tx}px`);
+            particle.style.setProperty('--ty', `${ty}px`);
+            particle.style.animation = `particle-spray ${Math.random() * 1 + 0.5}s ease-out forwards`;
+            particle.style.animationDelay = `${Math.random() * 0.5}s`;
+
+            container.appendChild(particle);
+            particles.push(particle);
+        }
+    }
+
+    // Основная функция смешивания
+    async function startBlending() {
+        if (isBlending) return;
+        isBlending = true;
+
+        const blendButton = document.getElementById('blendButton');
+        const blenderBody = document.getElementById('blenderBody');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const particlesContainer = document.getElementById('particlesContainer');
+        const vortexContainer = document.getElementById('vortexContainer');
+
+        // 1. Подготовка
+        updateStage(1);
+        blendButton.classList.add('blending');
+        progressBar.style.display = 'block';
+
+        // Анимация заполнения жидкостью
+        createLiquidLayers();
+        await sleep(1500);
+
+        // 2. Смешивание
+        updateStage(2);
+        blenderBody.classList.add('blending');
+        particlesContainer.style.opacity = '1';
+
+        // Запуск частиц
+        createParticles();
+        progressFill.style.width = '50%';
+
+        // Анимация вихря
+        vortexContainer.style.opacity = '1';
+        await sleep(2000);
+
+        // 3. Взбивание
+        updateStage(3);
+        progressFill.style.width = '75%';
+
+        // Создание пузырьков
+        createBubbles();
+
+        // Усиление вибрации
+        blenderBody.style.animationDuration = '0.1s';
+        await sleep(2000);
+
+        // 4. Завершение
+        updateStage(4);
+        progressFill.style.width = '100%';
+
+        // Остановка анимаций
+        await sleep(1000);
+        blenderBody.classList.remove('blending');
+        blendButton.classList.remove('blending');
+        particlesContainer.style.opacity = '0';
+        vortexContainer.style.opacity = '0';
+
+        // Показать результат
+        await sleep(500);
+        showResult();
+
+        isBlending = false;
+    }
+
+    // Обновление этапов
+    function updateStage(stageNumber) {
+        // Сброс всех этапов
+        for (let i = 1; i <= 4; i++) {
+            const stage = document.getElementById(`stage${i}`);
+            stage.classList.remove('active', 'completed');
+        }
+
+        // Активируем текущий этап
+        const currentStage = document.getElementById(`stage${stageNumber}`);
+        currentStage.classList.add('active');
+
+        // Помечаем предыдущие как завершенные
+        for (let i = 1; i < stageNumber; i++) {
+            const prevStage = document.getElementById(`stage${i}`);
+            prevStage.classList.add('completed');
+        }
+    }
+
+    // Показать результат с улучшенной визуализацией цвета
+    function showResult() {
+        const finalResult = document.getElementById('finalResult');
+        const resultCircle = document.getElementById('resultCircle');
+        const colorSample = document.getElementById('colorSample');
+        const colorHex = document.getElementById('colorHex');
+        const cocktailName = document.getElementById('cocktailName');
+        const rgbValue = document.getElementById('rgbValue');
+        const hexValue = document.getElementById('hexValue');
+        const hslValue = document.getElementById('hslValue');
+        const alphaValue = document.getElementById('alphaValue');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const colorName = document.getElementById('colorName');
+        const colorSparkles = document.getElementById('colorSparkles');
+
+        // Используем цвета с сервера или вычисляем
+        const finalColor = serverCalculatedColor || calculateWeightedColor();
+        const finalHex = serverHexColor || rgbToHex(finalColor.r, finalColor.g, finalColor.b);
+        const finalName = serverCocktailName || generateCocktailName(finalColor);
+        const hsl = rgbToHsl(finalColor.r, finalColor.g, finalColor.b);
+
+        const finalColorCss = finalColor.a !== undefined
+            ? `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`
+            : `rgb(${finalColor.r}, ${finalColor.g}, ${finalColor.b})`;
+
+        // Устанавливаем CSS переменные
+    document.documentElement.style.setProperty('--final-color', finalColorCss);
+
+    // Обновляем круг - задаем фон напрямую
+    const circleBefore = document.querySelector('.result-circle::before');
+    if (circleBefore) {
+        circleBefore.style.setProperty('background', finalColorCss, 'important');
+    }
+
+    // Обновляем образец цвета
+    if (colorSample) {
+        colorSample.style.backgroundColor = finalColorCss;
+        colorSample.style.background = finalColorCss; // Добавляем для надежности
+        colorSample.style.boxShadow = `0 0 20px ${finalHex}, 0 0 40px ${finalHex}80`;
+    }
+
+    // Обновляем значение HEX
+    if (colorHex) {
+        colorHex.textContent = finalHex;
+    }
+
+    // Принудительно применяем стили
+    document.documentElement.style.cssText += `--final-color: ${finalColorCss} !important;`;
+
+    // Применяем стили к элементам напрямую
+    const circleBeforeElement = document.createElement('style');
+    circleBeforeElement.textContent = `
+        .result-circle::before {
+            background: ${finalColorCss} !important;
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.3),
+                0 0 60px ${finalColorCss},
+                0 0 100px ${finalColorCss} !important;
+        }
+
+        .color-sample {
+            background: ${finalColorCss} !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2),
+                        0 0 20px ${finalHex} !important;
+        }
+    `;
+    document.head.appendChild(circleBeforeElement);
+
+        colorSample.style.backgroundColor = `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`;
+
+        // Вычисляем яркость
+        const brightness = Math.round(((finalColor.r * 299 + finalColor.g * 587 + finalColor.b * 114) / 1000) / 255 * 100);
+
+        // Генерируем более светлый вариант для свечения
+        const glowColor = `rgba(
+            ${Math.min(255, finalColor.r + 50)},
+            ${Math.min(255, finalColor.g + 50)},
+            ${Math.min(255, finalColor.b + 50)},
+            ${finalColor.a}
+        )`;
+
+        // Устанавливаем CSS переменные для ингредиентов
+        ingredients.forEach((ingredient, index) => {
+            document.documentElement.style.setProperty(`--color-${index + 1}`, ingredient.color_css);
+        });
+
+        // Устанавливаем CSS переменные для результата
+        document.documentElement.style.setProperty('--final-color',
+            `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`);
+        document.documentElement.style.setProperty('--final-color-glow', glowColor);
+
+        // Обновляем круг
+        resultCircle.style.setProperty('--final-color',
+            `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`);
+
+        // Обновляем образец цвета
+        colorSample.style.backgroundColor = `rgba(${finalColor.r}, ${finalColor.g}, ${finalColor.b}, ${finalColor.a})`;
+        colorSample.style.boxShadow = `0 0 20px ${finalHex}`;
+
+        // Обновляем значения
+        colorHex.textContent = finalHex;
+        cocktailName.textContent = finalName;
+        rgbValue.textContent = `rgb(${finalColor.r}, ${finalColor.g}, ${finalColor.b})`;
+        hexValue.textContent = finalHex;
+        hslValue.textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+        alphaValue.textContent = `${Math.round(finalColor.a * 100)}%`;
+        brightnessValue.textContent = `${brightness}%`;
+        colorName.textContent = getColorName(finalColor);
+
+        // Обновляем проценты ингредиентов
+        updateIngredientPercentages();
+
+        // Создаем спарклы
+        createSparkles(finalColor);
+
+        // Показываем результат с анимацией
+        finalResult.style.display = 'block';
+        finalResult.classList.add('success-animation');
+
+        // Сохраняем в историю
+        saveToHistory(finalColor, finalHex, finalName, hsl);
+    }
+
+    // Обновить процентное соотношение ингредиентов
+    function updateIngredientPercentages() {
+        const totalQuantity = getTotalQuantity();
+
+        ingredients.forEach(ingredient => {
+            const percentage = Math.round((ingredient.quantity / totalQuantity) * 100);
+            const element = document.getElementById(`percentage-${ingredient.name}`);
+            if (element) {
+                // Анимация счетчика
+                animateCounter(element, 0, percentage, 1500);
+            }
+        });
+    }
+
+    // Анимация счетчика
+    function animateCounter(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            element.textContent = `${value}%`;
+
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Создать спарклы
+    function createSparkles(color) {
+        const container = document.getElementById('colorSparkles');
+        container.innerHTML = '';
+
+        // Определяем цвет спарклов (белые для темных цветов, черные для светлых)
+        const sparkleColor = (color.r + color.g + color.b) / 3 > 128 ?
+            'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
+
+        for (let i = 0; i < 20; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.backgroundColor = sparkleColor;
+            sparkle.style.left = `${Math.random() * 100}%`;
+            sparkle.style.top = `${Math.random() * 100}%`;
+            sparkle.style.animationDelay = `${Math.random() * 2}s`;
+            sparkle.style.animationDuration = `${1 + Math.random() * 2}s`;
+            container.appendChild(sparkle);
+        }
+    }
+
+    // Получить имя цвета
+    function getColorName(color) {
+        const names = {
+            'red': { range: [0, 30, 345, 360], names: ['Красный', 'Бордовый', 'Малиновый'] },
+            'orange': { range: [31, 50], names: ['Оранжевый', 'Коралловый', 'Персиковый'] },
+            'yellow': { range: [51, 70], names: ['Желтый', 'Золотой', 'Лимонный'] },
+            'green': { range: [71, 160], names: ['Зеленый', 'Изумрудный', 'Лаймовый'] },
+            'blue': { range: [161, 240], names: ['Синий', 'Лазурный', 'Бирюзовый'] },
+            'purple': { range: [241, 290], names: ['Фиолетовый', 'Пурпурный', 'Лавандовый'] },
+            'pink': { range: [291, 344], names: ['Розовый', 'Фуксия', 'Перламутровый'] }
+        };
+
+        const hsl = rgbToHsl(color.r, color.g, color.b);
+        let colorCategory = 'other';
+
+        for (const [category, data] of Object.entries(names)) {
+            if (Array.isArray(data.range)) {
+                if (hsl.h >= data.range[0] && hsl.h <= data.range[1]) {
+                    colorCategory = category;
+                    break;
+                }
+            } else if (hsl.h >= data.range[0] && hsl.h <= data.range[1]) {
+                colorCategory = category;
+                break;
+            }
+        }
+
+        // Определяем оттенок по яркости и насыщенности
+        let shade = '';
+        if (hsl.l < 20) shade = 'Темно-';
+        else if (hsl.l > 80) shade = 'Светло-';
+        else if (hsl.s < 30) shade = 'Пастельный ';
+
+        // Выбираем случайное имя из категории
+        const categoryNames = names[colorCategory]?.names || ['Уникальный'];
+        const randomName = categoryNames[Math.floor(Math.random() * categoryNames.length)];
+
+        return shade + randomName;
+    }
+
+    // Вспомогательные функции
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     function rgbToHex(r, g, b) {
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
     }
 
-    // Функция для генерации названия коктейля
     function generateCocktailName(color) {
         const names = [
             "Тропический закат", "Морская свежесть", "Летний бриз", "Ягодный взрыв",
@@ -394,145 +1508,61 @@
             "Розовое облако", "Золотой эликсир", "Лазурная волна", "Изумрудный оазис"
         ];
 
-        // Выбираем название на основе цвета
-        const hue = Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180 / Math.PI;
+        const hue = Math.atan2(Math.sqrt(3) * (color.g - color.b), 2 * color.r - color.g - color.b) * 180 / Math.PI;
         const index = Math.abs(Math.floor(hue / 30)) % names.length;
-
         return names[index];
     }
 
-    // Функция для создания слоев жидкости в блендере
-    function createLiquidLayers() {
-        const blenderContent = document.getElementById('blenderContent');
-        blenderContent.innerHTML = '';
-
-        ingredients.forEach((ingredient, index) => {
-            const layer = document.createElement('div');
-            layer.className = 'liquid-layer';
-            layer.style.backgroundColor = ingredient.color_css;
-            layer.style.bottom = `${index * 20}%`;
-            blenderContent.appendChild(layer);
-        });
-    }
-
-    // Основная функция смешивания
-    function startBlending() {
-        if (isBlending) return;
-
-        isBlending = true;
-        const blendButton = document.getElementById('blendButton');
-        const blenderAnimation = document.getElementById('blenderAnimation');
-        const blenderContent = document.getElementById('blenderContent');
-
-        // Активируем анимацию
-        blendButton.classList.add('blending');
-        blenderAnimation.classList.add('blending');
-
-        // Заполняем блендер
-        blenderContent.style.height = '100%';
-        createLiquidLayers();
-
-        // Вычисляем результат
-        resultColor = calculateAverageColor();
-        const hexColor = rgbToHex(resultColor.r, resultColor.g, resultColor.b);
-        const cocktailName = generateCocktailName(resultColor);
-
-        // Ждем окончания анимации
-        setTimeout(() => {
-            // Останавливаем анимацию
-            blendButton.classList.remove('blending');
-            blenderAnimation.classList.remove('blending');
-
-            // Показываем результат
-            showResult(resultColor, hexColor, cocktailName);
-
-            isBlending = false;
-        }, 3000); // 3 секунды анимации
-    }
-
-    // Функция для отображения результата
-    function showResult(rgb, hex, name) {
-        const finalResult = document.getElementById('finalResult');
-        const resultColorElement = document.getElementById('resultColor');
-        const rgbValue = document.getElementById('rgbValue');
-        const hexValue = document.getElementById('hexValue');
-        const cocktailName = document.getElementById('cocktailName');
-
-        // Используем цвета с сервера
-        const finalRgb = serverCalculatedColor || rgb;
-        const finalHex = serverHexColor || hex;
-        const finalName = serverCocktailName || name;
-
-        // Устанавливаем цвета
-        resultColorElement.style.setProperty('--result-color', `rgb(${finalRgb.r}, ${finalRgb.g}, ${finalRgb.b})`);
-
-        // Устанавливаем значения
-        rgbValue.textContent = `rgb(${finalRgb.r}, ${finalRgb.g}, ${finalRgb.b})`;
-        hexValue.textContent = finalHex;
-        cocktailName.textContent = finalName;
-
-        // Добавляем отдельные цвета для градиента
-        ingredients.forEach((ingredient, index) => {
-            resultColorElement.style.setProperty(`--color-${index + 1}`, ingredient.color_css);
-        });
-
-        // Показываем результат с анимацией
-        finalResult.style.display = 'block';
-        finalResult.classList.add('success-animation');
-
-        // Сохраняем результат в localStorage для истории
-        saveToHistory(finalRgb, finalHex, finalName);
-    }
-
-    function saveToHistory(rgb, hex, name) {
+    function saveToHistory(rgb, hex, name, hsl) {
         try {
             const history = JSON.parse(localStorage.getItem('cocktailHistory') || '[]');
-
             history.push({
                 date: new Date().toISOString(),
-                color: { rgb: rgb, hex: hex },
+                color: { rgb, hex, hsl },
                 name: name,
                 ingredients: ingredients.map(i => ({
                     name: i.name,
                     quantity: i.quantity,
-                    percentage: i.percentage
+                    percentage: Math.round((i.quantity / getTotalQuantity()) * 100)
                 }))
             });
 
-            // Сохраняем только последние 10 коктейлей
-            if (history.length > 10) {
-                history.shift();
-            }
-
+            if (history.length > 10) history.shift();
             localStorage.setItem('cocktailHistory', JSON.stringify(history));
         } catch (e) {
             console.error('Error saving to history:', e);
         }
     }
+
     // Функции для шаринга
-    function shareOnWhatsApp() {
+    async function shareOnWhatsApp() {
         const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
     }
 
-    function shareOnTelegram() {
+    async function shareOnTelegram() {
         const text = `🍹 Я создал уникальный коктейль "${document.getElementById('cocktailName').textContent}"! Цвет: ${document.getElementById('hexValue').textContent}`;
         const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
     }
 
-    function copyResult() {
-        const text = `Коктейль: ${document.getElementById('cocktailName').textContent}\nЦвет: ${document.getElementById('hexValue').textContent} (${document.getElementById('rgbValue').textContent})\nИнгредиенты:\n${ingredients.map(i => `  ${i.emoji} ${i.name} - ${i.quantity}×10гр`).join('\n')}`;
+    async function copyResult() {
+        const text = `Коктейль: ${document.getElementById('cocktailName').textContent}\nЦвет: ${document.getElementById('hexValue').textContent}\nRGB: ${document.getElementById('rgbValue').textContent}\nHSL: ${document.getElementById('hslValue').textContent}`;
 
-        navigator.clipboard.writeText(text).then(() => {
+        try {
+            await navigator.clipboard.writeText(text);
             showNotification('Результат скопирован в буфер обмена!', 'success');
-        }).catch(err => {
+        } catch (err) {
             showNotification('Ошибка копирования', 'error');
-        });
+        }
     }
 
-    // Утилитная функция для уведомлений
+    async function downloadImage() {
+        // В реальном приложении здесь была бы генерация изображения
+        showNotification('Функция сохранения изображения в разработке', 'info');
+    }
+
     function showNotification(message, type) {
         const notification = document.getElementById('notification');
         notification.textContent = message;
@@ -546,8 +1576,17 @@
 
     // Инициализация при загрузке
     document.addEventListener('DOMContentLoaded', function() {
-        // Сразу создаем слои жидкости (прозрачные)
-        createLiquidLayers();
+        // Сразу показываем ингредиенты
+        const visual = document.getElementById('ingredientsVisual');
+        visual.style.opacity = '1';
+
+        // Устанавливаем начальные этапы
+        updateStage(1);
+
+        // Устанавливаем переменные для ингредиентов
+        ingredients.forEach((ingredient, index) => {
+            document.documentElement.style.setProperty(`--color-${index + 1}`, ingredient.color_css);
+        });
     });
 </script>
 {% endblock %}

@@ -14,6 +14,39 @@ class CartManager {
         setTimeout(() => this.syncCartWithServer(), 1000);
     }
 
+    // Обновить итоговую сумму на странице корзины
+    updateCartTotal(total) {
+        // Обновляем основной элемент с суммой
+        const totalElement = document.getElementById('cart-total-amount');
+        if (totalElement) {
+            const currentTotal = parseInt(totalElement.textContent.replace('₽', '').replace(/\s/g, '')) || 0;
+            totalElement.textContent = `${total} ₽`;
+
+            // Анимация изменения суммы
+            if (total !== currentTotal) {
+                totalElement.classList.add('updated');
+                setTimeout(() => {
+                    totalElement.classList.remove('updated');
+                }, 500);
+            }
+        }
+
+        // Также обновляем другие элементы с суммой если они есть
+        document.querySelectorAll('.cart-total').forEach(element => {
+            element.textContent = `${total} ₽`;
+        });
+    }
+
+    // Обновить количество позиций
+    updateItemCount(count) {
+        const countElement = document.getElementById('cart-total-count');
+        if (countElement) {
+            const currentText = countElement.textContent;
+            // Заменяем только число позиций, сохраняя остальной текст
+            countElement.textContent = currentText.replace(/Всего товаров: \d+/, `Всего товаров: ${count}`);
+        }
+    }
+
     async loadCartFromStorage() {
         const savedCart = localStorage.getItem('fruitShopCart');
         if (savedCart) {
@@ -139,58 +172,85 @@ class CartManager {
 
     async updateCartItem(productName, quantity) {
         if (quantity < 0) return;
-
         try {
-            const response = await fetch('/update_cart_item', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
-            });
+                const response = await fetch('/update_cart_item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `product_name=${encodeURIComponent(productName)}&quantity=${quantity}`
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (data.success) {
-                // Обновляем локальное хранилище
-                const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
+                if (data.success) {
+                    // Обновляем локальное хранилище
+                    const currentCart = JSON.parse(localStorage.getItem('fruitShopCart') || '{}');
 
-                if (quantity === 0) {
-                    delete currentCart[productName];
-                } else {
-                    currentCart[productName] = quantity;
-                }
-
-                localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
-                window.cartData = currentCart;
-
-                // Обновляем UI если на странице корзины
-                if (window.location.pathname.includes('/cart')) {
                     if (quantity === 0) {
-                        this.removeCartItemFromUI(productName);
+                        delete currentCart[productName];
                     } else {
-                        this.updateCartItemInUI(productName, quantity, data);
+                        currentCart[productName] = quantity;
                     }
 
-                    // Обновляем итоговую сумму
-                    this.updateCartTotal(data.total_cost);
+                    localStorage.setItem('fruitShopCart', JSON.stringify(currentCart));
+                    window.cartData = currentCart;
 
-                    // Если корзина пуста, перезагружаем страницу
-                    if (Object.keys(currentCart).length === 0) {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
+                    // Обновляем UI если на странице корзины
+                    if (window.location.pathname.includes('/cart')) {
+                        if (quantity === 0) {
+                            this.removeCartItemFromUI(productName);
+                        } else {
+                            this.updateCartItemInUI(productName, quantity, data);
+                        }
+
+                        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Обновляем итоговую сумму
+                        this.updateCartTotal(data.total_cost);
+                        this.updateCartItemCount(data.cart_total);
+
+                        // Если корзина пуста, перезагружаем страницу
+                        if (Object.keys(currentCart).length === 0) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        }
                     }
+
+                    // Обновляем индикатор
+                    this.updateCartIndicator(data.cart_total);
+
+                    // Добавляем уведомление
+                    this.showNotification('Корзина обновлена', 'success');
+
+                    return data;
                 }
-
-                // Обновляем индикатор
-                this.updateCartIndicator(data.cart_total);
-
-                this.showNotification('Корзина обновлена', 'success');
+            } catch (error) {
+                console.error('Failed to update cart item:', error);
+                this.showNotification('Ошибка при обновлении количества', 'error');
             }
-        } catch (error) {
-            console.error('Failed to update cart item:', error);
-            this.showNotification('Ошибка при обновлении количества', 'error');
+        }
+
+    updateCartItemCount(totalItems) {
+        // Обновляем количество в индикаторе корзины
+        this.updateCartIndicator(totalItems);
+
+        // Если есть элемент с отображением общего количества товаров
+        const totalCountElement = document.getElementById('cart-total-count');
+        if (totalCountElement) {
+            totalCountElement.textContent = totalItems;
+        }
+
+        // Обновляем в навигации если есть
+        const cartIndicator = document.querySelector('.cart-indicator');
+        if (cartIndicator && totalItems > 0) {
+            // Добавляем счетчик если его нет
+            if (!cartIndicator.querySelector('.count')) {
+                const countElement = document.createElement('div');
+                countElement.className = 'count absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center';
+                cartIndicator.appendChild(countElement);
+            }
+            const countElement = cartIndicator.querySelector('.count');
+            countElement.textContent = totalItems > 9 ? '9+' : totalItems;
         }
     }
 
@@ -296,7 +356,6 @@ class CartManager {
         }
     }
 
-
     setupEventListeners() {
         // Обработка кликов по кнопкам добавления в корзину
         document.addEventListener('click', (e) => {
@@ -343,6 +402,29 @@ class CartManager {
                 this.inputTimeout = setTimeout(() => {
                     this.updateCartItem(productName, quantity);
                 }, 500);
+            }
+        });
+
+        // Обработка кнопок в корзине
+        document.addEventListener('click', (e) => {
+            // Кнопки увеличения/уменьшения в корзине
+            if (e.target.matches('.cart-increase') || e.target.closest('.cart-increase')) {
+                const button = e.target.matches('.cart-increase') ? e.target : e.target.closest('.cart-increase');
+                const productName = button.dataset.productName;
+                this.updateCartQuantity(productName, 1);
+            }
+
+            if (e.target.matches('.cart-decrease') || e.target.closest('.cart-decrease')) {
+                const button = e.target.matches('.cart-decrease') ? e.target : e.target.closest('.cart-decrease');
+                const productName = button.dataset.productName;
+                this.updateCartQuantity(productName, -1);
+            }
+
+            // Удаление из корзины
+            if (e.target.matches('.remove-from-cart') || e.target.closest('.remove-from-cart')) {
+                const button = e.target.matches('.remove-from-cart') ? e.target : e.target.closest('.remove-from-cart');
+                const productName = button.dataset.productName;
+                this.removeFromCart(productName);
             }
         });
 
@@ -449,7 +531,6 @@ class CartManager {
         }
     }
 
-
     updateButtonStates(productName, quantity, row) {
         if (!row) {
             row = document.querySelector(`[data-product="${productName}"]`);
@@ -504,13 +585,13 @@ class CartManager {
                 setTimeout(() => button.classList.remove('animate-press'), 300);
             }
 
-            // Немедленное обновление
+            // Немедленное обновление через API
             this.updateCartItem(productName, newValue);
         }
     }
 
     async removeFromCart(productName) {
-        await this.updateCartItem(productName, 0);
+        const response = await this.updateCartItem(productName, 0);
 
         // Анимация удаления
         const row = document.querySelector(`[data-product="${productName}"]`);
@@ -522,13 +603,36 @@ class CartManager {
                     row.parentNode.removeChild(row);
                 }
 
+                // Обновляем итоговую сумму если она есть в ответе
+                if (response && response.total_cost !== undefined) {
+                    this.updateCartTotal(response.total_cost);
+                }
+
                 // Проверяем, пуста ли теперь корзина
                 const remainingRows = document.querySelectorAll('[data-product]');
                 if (remainingRows.length === 0) {
-                    // Перезагружаем страницу, если корзина пуста
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                    // Показываем сообщение о пустой корзине
+                    const emptyCartMessage = `
+                        <div class="text-center p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 shadow-xl">
+                            <div class="text-8xl mb-6">🍹</div>
+                            <h3 class="text-2xl font-bold mb-3 text-gray-700 dark:text-gray-300">Корзина пуста</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                                Добавьте свежие фрукты и прочее из нашего каталога, чтобы сделать напиток
+                            </p>
+                            <a href="${document.getElementById('urls-data')?.dataset?.productListUrl || '/'}"
+                               class="btn text-lg px-8 py-3 inline-flex items-center gap-2 hover:scale-105 transition-transform">
+                                <span>🛍️</span>
+                                Перейти в каталог
+                            </a>
+                        </div>
+                    `;
+
+                    // Заменяем таблицу на сообщение о пустой корзине
+                    const cartContainer = document.querySelector('.cart-items') || document.querySelector('table');
+                    if (cartContainer && cartContainer.parentNode) {
+                        const parent = cartContainer.parentNode;
+                        parent.innerHTML = emptyCartMessage;
+                    }
                 }
             }, 300);
         }
@@ -557,19 +661,12 @@ class CartManager {
         }
     }
 
-    updateCartTotal(total) {
-        const totalElement = document.getElementById('cart-total');
+        updateCartTotal(total) {
+        const totalElement = document.getElementById('cart-total-amount');
         if (totalElement) {
-            const oldTotal = parseInt(totalElement.textContent.replace('₽', '').trim()) || 0;
             totalElement.textContent = `${total} ₽`;
-
-            // Анимация изменения суммы
-            if (total !== oldTotal) {
-                totalElement.classList.add('updated');
-                setTimeout(() => {
-                    totalElement.classList.remove('updated');
-                }, 500);
-            }
+            totalElement.classList.add('updated');
+            setTimeout(() => totalElement.classList.remove('updated'), 500);
         }
     }
 

@@ -119,8 +119,8 @@ class ColorUtils:
         if main_ingredient:
             ingredient_name = main_ingredient['name'].capitalize()
             if ingredient_name in ['Молоко', 'Сливки']:
-                return f"{adjective} {ingredient_name.lower()}ный коктейль"
+                return f"{adjective} {ingredient_name.lower()}-коктейль"
             else:
-                return f"{adjective} {ingredient_name.lower()}овый микс"
+                return f"{adjective} {ingredient_name.lower()}-микс"
 
         return f"{adjective} коктейль"
